@@ -6,6 +6,8 @@ import 'models/goal.dart';
 import 'models/recurring_purchase.dart';
 import 'models/assumptions.dart';
 import 'models/income_source.dart';
+import 'models/account.dart';
+import 'models/transaction.dart';
 import 'theme.dart';
 import 'router.dart';
 import 'finance.dart';
@@ -24,6 +26,8 @@ Future<void> main() async {
   Hive.registerAdapter(RecurringPurchaseAdapter());
   Hive.registerAdapter(AssumptionsAdapter());
   Hive.registerAdapter(IncomeSourceAdapter());
+  Hive.registerAdapter(AccountAdapter());
+  Hive.registerAdapter(TransactionAdapter());
 
   // Open Hive boxes
   await Hive.openBox<UserProfile>('user_profile');
@@ -31,6 +35,8 @@ Future<void> main() async {
   await Hive.openBox<RecurringPurchase>('purchases');
   await Hive.openBox<Assumptions>('assumptions');
   await Hive.openBox<IncomeSource>('income_sources');
+  await Hive.openBox<Account>('accounts');
+  await Hive.openBox<Transaction>('transactions');
 
   // Run database migrations
   await runMigrations();

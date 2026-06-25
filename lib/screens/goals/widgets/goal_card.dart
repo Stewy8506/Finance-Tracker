@@ -82,9 +82,9 @@ class GoalCard extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
+          color: const Color(0xFF111215),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF2E2E2E)),
+          border: Border.all(color: const Color(0xFF1F2128)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,7 +102,7 @@ class GoalCard extends ConsumerWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF262626),
+                    color: const Color(0xFF1F2128),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -209,7 +209,7 @@ class InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF262626),
+        color: const Color(0xFF1F2128),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

@@ -186,7 +186,7 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
     return RepaintBoundary(
       key: widget.chartKey,
       child: Container(
-        color: const Color(0xFF141414),
+        color: const Color(0xFF08090A),
         child: Column(
           children: [
             Expanded(
@@ -202,7 +202,7 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
                       show: true,
                       drawVerticalLine: false,
                       getDrawingHorizontalLine: (v) => const FlLine(
-                        color: Color(0xFF2E2E2E),
+                        color: Color(0xFF1F2128),
                         strokeWidth: 1,
                       ),
                     ),
@@ -410,9 +410,9 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E1E1E),
+                    color: const Color(0xFF111215),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF2E2E2E)),
+                    border: Border.all(color: const Color(0xFF1F2128)),
                   ),
                   child: Row(
                     children: [
@@ -430,7 +430,7 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
                             final bestRegimeName = delta >= 0 ? currentRegimeName : otherRegimeName;
                             return Text(
                               'Using the $bestRegimeName regime results in a ${formatLakhsCrores(delta.abs())} higher corpus after 20 years compared to the ${delta >= 0 ? otherRegimeName : currentRegimeName} regime.',
-                              style: const TextStyle(fontSize: 12, color: Color(0xFFFFF5EE)),
+                              style: const TextStyle(fontSize: 12, color: Color(0xFFF4F4F6)),
                             );
                           }
                         ),
@@ -505,7 +505,7 @@ class _TableTab extends ConsumerWidget {
     final startYear = profile?.startYear ?? DateTime.now().year;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 120),
       scrollDirection: Axis.vertical,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -640,7 +640,7 @@ class _WhatIfTabState extends ConsumerState<_WhatIfTab> {
     final delta = whatIfCorpus10 - baseCorpus10;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -655,10 +655,10 @@ class _WhatIfTabState extends ConsumerState<_WhatIfTab> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
+              color: const Color(0xFF111215),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                  color: const Color(0xFF2E2E2E)),
+                  color: const Color(0xFF1F2128)),
             ),
             child: Row(
               children: [
@@ -1001,7 +1001,7 @@ class _RetirementTabState extends ConsumerState<_RetirementTab> {
     final depletionAge = _retirementAge + depletionYears;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1083,9 +1083,9 @@ class _RetirementTabState extends ConsumerState<_RetirementTab> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
+              color: const Color(0xFF111215),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF2E2E2E)),
+              border: Border.all(color: const Color(0xFF1F2128)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1204,9 +1204,9 @@ class _RetirementMetricCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: const Color(0xFF111215),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF2E2E2E)),
+        border: Border.all(color: const Color(0xFF1F2128)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

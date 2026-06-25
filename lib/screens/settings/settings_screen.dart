@@ -61,6 +61,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _AssumptionsEditor(assumptions: assumptions),
           const SizedBox(height: 24),
 
+          // ── APP CUSTOMIZATION ──────────────────────────────────────────
+          _SectionHeader('App Customization'),
+          const SizedBox(height: 12),
+          _AppPreferencesEditor(profile: profile),
+          const SizedBox(height: 24),
+
           // ── 4. DATA ────────────────────────────────────────────────────
           _SectionHeader('Data'),
           const SizedBox(height: 12),
@@ -205,9 +211,9 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
+          color: const Color(0xFF111215),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF2E2E2E)),
+          border: Border.all(color: const Color(0xFF1F2128)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,7 +223,7 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
               padding: const EdgeInsets.all(14),
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: const Color(0xFF262626),
+                color: const Color(0xFF1F2128),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -423,7 +429,7 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
           DropdownButtonFormField<String>(
             initialValue: _cityPreset,
             decoration: const InputDecoration(labelText: 'City Preset'),
-            dropdownColor: const Color(0xFF1E1E1E),
+            dropdownColor: const Color(0xFF111215),
             items: const [
               DropdownMenuItem(
                   value: 'kolkata_home', child: Text('Kolkata (home)')),
@@ -606,10 +612,10 @@ class _TaxCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: const Color(0xFF111215),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xFF2E2E2E),
+          color: const Color(0xFF1F2128),
           width: 1,
         ),
       ),
@@ -636,7 +642,7 @@ class _TaxCard extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFF262626),
+                color: const Color(0xFF1F2128),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -725,9 +731,9 @@ class _AssumptionsEditorState extends ConsumerState<_AssumptionsEditor> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
+          color: const Color(0xFF111215),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF2E2E2E)),
+          border: Border.all(color: const Color(0xFF1F2128)),
         ),
         child: Column(
           children: [
@@ -854,6 +860,85 @@ class _AssumptionField extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// APP PREFERENCES EDITOR
+// ─────────────────────────────────────────────────────────────────────────────
+class _AppPreferencesEditor extends ConsumerWidget {
+  final UserProfile profile;
+
+  const _AppPreferencesEditor({required this.profile});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentStyle = profile.navbarStyle ?? 'expand';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111215),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF1F2128), width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Navbar Style',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Select navigation layout design',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+              DropdownButton<String>(
+                value: currentStyle,
+                dropdownColor: const Color(0xFF111215),
+                underline: const SizedBox(),
+                icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF8E8E93)),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'expand',
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Text('Dynamic Expand'),
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'icons_only',
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Text('Icons Only (Dots)'),
+                    ),
+                  ),
+                ],
+                onChanged: (val) {
+                  if (val != null) {
+                    HapticFeedback.lightImpact();
+                    ref.read(userProfileProvider.notifier).save(
+                          profile.copyWith(navbarStyle: val),
+                        );
+                  }
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DATA SECTION
 // ─────────────────────────────────────────────────────────────────────────────
 class _DataSection extends ConsumerWidget {
@@ -870,9 +955,9 @@ class _DataSection extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: const Color(0xFF111215),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2E2E2E)),
+        border: Border.all(color: const Color(0xFF1F2128)),
       ),
       child: Column(
         children: [
@@ -882,7 +967,7 @@ class _DataSection extends ConsumerWidget {
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF262626),
+                color: const Color(0xFF1F2128),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.download_outlined,
@@ -954,7 +1039,7 @@ class _DataSection extends ConsumerWidget {
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF262626),
+                color: const Color(0xFF1F2128),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.upload_outlined,
@@ -1032,7 +1117,7 @@ class _DataSection extends ConsumerWidget {
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF262626),
+                color: const Color(0xFF1F2128),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.delete_sweep_outlined,
@@ -1088,9 +1173,9 @@ class _AdditionalIncomeEditor extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: const Color(0xFF111215),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2E2E2E)),
+        border: Border.all(color: const Color(0xFF1F2128)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

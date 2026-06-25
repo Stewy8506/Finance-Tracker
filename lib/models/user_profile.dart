@@ -85,6 +85,10 @@ class UserProfile extends HiveObject {
   @HiveField(14)
   double? liabilities;
 
+  /// The navigation bar style selection: 'expand' or 'icons_only'
+  @HiveField(15)
+  String? navbarStyle;
+
   UserProfile({
     required this.startingCtcLpa,
     required this.annualHikePct,
@@ -101,6 +105,7 @@ class UserProfile extends HiveObject {
     this.startYear,
     this.otherAssets,
     this.liabilities,
+    this.navbarStyle,
   });
 
   // ── Hike bracket helpers ──────────────────────────────────────────────
@@ -152,6 +157,7 @@ class UserProfile extends HiveObject {
     int? startYear,
     double? otherAssets,
     double? liabilities,
+    String? navbarStyle,
   }) {
     return UserProfile(
       startingCtcLpa: startingCtcLpa ?? this.startingCtcLpa,
@@ -169,6 +175,7 @@ class UserProfile extends HiveObject {
       startYear: startYear ?? this.startYear,
       otherAssets: otherAssets ?? this.otherAssets,
       liabilities: liabilities ?? this.liabilities,
+      navbarStyle: navbarStyle ?? this.navbarStyle,
     );
   }
 

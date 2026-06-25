@@ -244,10 +244,10 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E1E1E),
+                    color: const Color(0xFF111215),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: const Color(0xFF2E2E2E)),
+                        color: const Color(0xFF1F2128)),
                   ),
                   child: Row(
                     children: [

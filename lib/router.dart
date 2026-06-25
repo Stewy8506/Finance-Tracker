@@ -7,6 +7,7 @@ import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/goals/goals_screen.dart';
 import 'screens/purchases/purchases_screen.dart';
 import 'screens/projection/projection_screen.dart';
+import 'screens/ledger/ledger_screen.dart';
 import 'screens/settings/settings_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -60,6 +61,14 @@ GoRouter buildAppRouter(bool onboardingComplete) {
               GoRoute(
                 path: '/projection',
                 builder: (context, state) => const ProjectionScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/ledger',
+                builder: (context, state) => const LedgerScreen(),
               ),
             ],
           ),

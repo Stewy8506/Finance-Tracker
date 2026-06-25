@@ -73,17 +73,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF262626),
+                      color: const Color(0xFF1F2128),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(Icons.account_balance_wallet,
-                        color: Color(0xFFFFF5EE), size: 18),
+                        color: Color(0xFFF4F4F6), size: 18),
                   ),
                   const SizedBox(width: 10),
                   Text(
                     'Ledger',
                     style: theme.textTheme.titleLarge?.copyWith(
-                      color: const Color(0xFFFFF5EE),
+                      color: const Color(0xFFF4F4F6),
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -92,7 +92,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 // ── Net Worth summary card ───────────────────────────────
@@ -325,9 +325,9 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: const Color(0xFF111215),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2E2E2E)),
+        border: Border.all(color: const Color(0xFF1F2128)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,7 +336,7 @@ class _StatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: const Color(0xFF262626),
+              color: const Color(0xFF1F2128),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 18),
@@ -429,10 +429,10 @@ class _BudgetPieChart extends StatelessWidget {
       height: 260,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: const Color(0xFF111215),
         borderRadius: BorderRadius.circular(16),
         border:
-            Border.all(color: const Color(0xFF2E2E2E)),
+            Border.all(color: const Color(0xFF1F2128)),
       ),
       child: Row(
         children: [
@@ -628,13 +628,13 @@ class _SpendCalendarState extends State<_SpendCalendar> {
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? const Color(0xFF262626)
-                        : const Color(0xFF1E1E1E),
+                        ? const Color(0xFF1F2128)
+                        : const Color(0xFF111215),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isSelected
-                          ? const Color(0xFFFFF5EE)
-                          : const Color(0xFF2E2E2E),
+                          ? const Color(0xFFF4F4F6)
+                          : const Color(0xFF1F2128),
                     ),
                   ),
                   child: Column(
@@ -683,9 +683,9 @@ class _SpendCalendarState extends State<_SpendCalendar> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
+              color: const Color(0xFF111215),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF2E2E2E)),
+              border: Border.all(color: const Color(0xFF1F2128)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -783,9 +783,9 @@ class _MilestoneCard extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
+          color: const Color(0xFF111215),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF2E2E2E)),
+          border: Border.all(color: const Color(0xFF1F2128)),
         ),
         child: Row(
           children: [
@@ -817,9 +817,9 @@ class _MilestoneCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: const Color(0xFF111215),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2E2E2E)),
+        border: Border.all(color: const Color(0xFF1F2128)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -839,7 +839,7 @@ class _MilestoneCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF262626),
+                  color: const Color(0xFF1F2128),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -928,9 +928,9 @@ class _EmergencyFundCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: const Color(0xFF111215),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2E2E2E)),
+        border: Border.all(color: const Color(0xFF1F2128)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -940,7 +940,7 @@ class _EmergencyFundCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF262626),
+                  color: const Color(0xFF1F2128),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.shield_outlined, color: statusColor, size: 18),
@@ -964,7 +964,7 @@ class _EmergencyFundCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF262626),
+                  color: const Color(0xFF1F2128),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -1003,7 +1003,7 @@ class _EmergencyFundCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 6,
-              backgroundColor: const Color(0xFF2E2E2E),
+              backgroundColor: const Color(0xFF1F2128),
               valueColor: AlwaysStoppedAnimation(statusColor),
             ),
           ),
@@ -1055,9 +1055,9 @@ class _NetWorthCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: const Color(0xFF111215),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2E2E2E)),
+        border: Border.all(color: const Color(0xFF1F2128)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1167,9 +1167,9 @@ class _FinancialHealthScoreCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
+          color: const Color(0xFF111215),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF2E2E2E)),
+          border: Border.all(color: const Color(0xFF1F2128)),
         ),
         child: Row(
           children: [
@@ -1209,7 +1209,7 @@ class _FinancialHealthScoreCard extends StatelessWidget {
                   CircularProgressIndicator(
                     value: score / 100,
                     strokeWidth: 5,
-                    backgroundColor: const Color(0xFF2E2E2E),
+                    backgroundColor: const Color(0xFF1F2128),
                     valueColor: AlwaysStoppedAnimation(statusColor),
                   ),
                   Text(
@@ -1356,9 +1356,9 @@ class _CashFlowWaterfall extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: const Color(0xFF111215),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2E2E2E)),
+        border: Border.all(color: const Color(0xFF1F2128)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1399,7 +1399,7 @@ class _CashFlowWaterfall extends StatelessWidget {
                       return LinearProgressIndicator(
                         value: value,
                         minHeight: 8,
-                        backgroundColor: const Color(0xFF2E2E2E),
+                        backgroundColor: const Color(0xFF1F2128),
                         valueColor: AlwaysStoppedAnimation(item.color),
                       );
                     },

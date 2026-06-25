@@ -22,7 +22,7 @@ class GoalsScreen extends ConsumerWidget {
             padding: const EdgeInsets.only(right: 8),
             child: Chip(
               label: Text('${goals.length} goals'),
-              backgroundColor: const Color(0xFF262626),
+              backgroundColor: const Color(0xFF1F2128),
               labelStyle: TextStyle(
                   color: theme.colorScheme.primary,
                   fontSize: 12,
@@ -39,7 +39,7 @@ class GoalsScreen extends ConsumerWidget {
       body: goals.isEmpty
           ? EmptyGoals(onAdd: () => _showGoalSheet(context, ref, null))
           : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
               itemCount: goals.length,
               separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (context, i) => GoalCard(
@@ -70,7 +70,7 @@ class GoalsScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: const Color(0xFF111215),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => GoalForm(existing: existing),

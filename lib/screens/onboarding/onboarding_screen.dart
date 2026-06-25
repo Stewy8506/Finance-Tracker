@@ -215,17 +215,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF262626),
+                          color: const Color(0xFF1F2128),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(Icons.account_balance_wallet,
-                            color: Color(0xFFFFF5EE), size: 22),
+                            color: Color(0xFFF4F4F6), size: 22),
                       ),
                       const SizedBox(width: 12),
                       Text(
                         'Ledger',
                         style: theme.textTheme.headlineMedium?.copyWith(
-                          color: const Color(0xFFFFF5EE),
+                          color: const Color(0xFFF4F4F6),
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -242,7 +242,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           decoration: BoxDecoration(
                             color: isActive
                                 ? theme.colorScheme.primary
-                                : const Color(0xFF2E2E2E),
+                                : const Color(0xFF1F2128),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -398,10 +398,10 @@ class _Step1CTC extends StatelessWidget {
             duration: const Duration(milliseconds: 300),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
+              color: const Color(0xFF111215),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                  color: const Color(0xFF2E2E2E)),
+                  color: const Color(0xFF1F2128)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -492,10 +492,10 @@ class _Step2Hike extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
+              color: const Color(0xFF111215),
               borderRadius: BorderRadius.circular(12),
               border:
-                  Border.all(color: const Color(0xFF2E2E2E)),
+                  Border.all(color: const Color(0xFF1F2128)),
             ),
             child: Row(
               children: [
@@ -557,7 +557,7 @@ class _Step3City extends StatelessWidget {
           DropdownButtonFormField<String>(
             initialValue: preset,
             decoration: const InputDecoration(labelText: 'City / Living Situation'),
-            dropdownColor: const Color(0xFF1E1E1E),
+            dropdownColor: const Color(0xFF111215),
             items: const [
               DropdownMenuItem(
                   value: 'kolkata_home', child: Text('Kolkata (living at home)')),
@@ -706,9 +706,9 @@ class _CorpusCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: const Color(0xFF111215),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF2E2E2E)),
+        border: Border.all(color: const Color(0xFF1F2128)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

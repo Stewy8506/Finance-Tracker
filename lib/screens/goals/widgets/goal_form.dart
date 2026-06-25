@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../models/goal.dart';
 import '../../../providers/goals_provider.dart';
+import '../../../utils/currency_formatter.dart';
+import '../../../utils/formatters.dart';
+import 'package:intl/intl.dart';
 
 class GoalForm extends ConsumerStatefulWidget {
   final Goal? existing;
@@ -22,7 +25,7 @@ class _GoalFormState extends ConsumerState<GoalForm> {
   late final TextEditingController _amountCtrl;
   late final TextEditingController _yearCtrl;
   late final TextEditingController _propertyValueCtrl;
-  late final TextEditingController _dpPctCtrl;
+  double _dpPct = 20.0;
 
   String _type = 'purchase';
   String _priority = 'high';
@@ -33,14 +36,17 @@ class _GoalFormState extends ConsumerState<GoalForm> {
     super.initState();
     final g = widget.existing;
     _nameCtrl = TextEditingController(text: g?.name ?? '');
+    final fmt = NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 0);
     _amountCtrl = TextEditingController(
-        text: g?.targetAmount.toInt().toString() ?? '');
+        text: g != null ? fmt.format(g.targetAmount).trim() : '');
     _yearCtrl =
         TextEditingController(text: g?.targetYear.toString() ?? '5');
     _propertyValueCtrl = TextEditingController(
-        text: g?.propertyValue?.toInt().toString() ?? '');
-    _dpPctCtrl = TextEditingController(
-        text: ((g?.downPaymentPct ?? 0.2) * 100).toInt().toString());
+        text: g != null && g.propertyValue != null ? fmt.format(g.propertyValue!).trim() : '');
+    _dpPct = (g?.downPaymentPct ?? 0.2) * 100;
+    
+    _propertyValueCtrl.addListener(_onPropertyValueChanged);
+    _amountCtrl.addListener(_onTargetAmountChanged);
     _type = g?.type ?? 'purchase';
     _priority = g?.priority ?? 'high';
     _adjustForInflation = g?.adjustForInflation ?? false;
@@ -52,8 +58,49 @@ class _GoalFormState extends ConsumerState<GoalForm> {
     _amountCtrl.dispose();
     _yearCtrl.dispose();
     _propertyValueCtrl.dispose();
-    _dpPctCtrl.dispose();
     super.dispose();
+  }
+
+  double get _parsedProperty =>
+      double.tryParse(_propertyValueCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+
+  double get _parsedAmount =>
+      double.tryParse(_amountCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+
+  void _onPropertyValueChanged() {
+    if (_type != 'down_payment') {
+      setState(() {});
+      return;
+    }
+    final propVal = _parsedProperty;
+    if (propVal > 0) {
+      final newAmt = propVal * (_dpPct / 100);
+      final newAmtStr = NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 0).format(newAmt).trim();
+      if (_amountCtrl.text != newAmtStr) {
+        _amountCtrl.text = newAmtStr;
+      }
+    }
+    setState(() {});
+  }
+
+  void _onTargetAmountChanged() {
+    if (_type != 'down_payment') {
+      setState(() {});
+      return;
+    }
+    final propVal = _parsedProperty;
+    final amtVal = _parsedAmount;
+    if (propVal > 0 && amtVal >= 0) {
+      double newPct = (amtVal / propVal) * 100;
+      if (newPct > 100) newPct = 100;
+      if (_dpPct != newPct) {
+        setState(() {
+          _dpPct = newPct;
+        });
+        return;
+      }
+    }
+    setState(() {});
   }
 
   void _save() {
@@ -61,15 +108,15 @@ class _GoalFormState extends ConsumerState<GoalForm> {
     final goal = Goal(
       id: widget.existing?.id ?? _uuid.v4(),
       name: _nameCtrl.text,
-      targetAmount: double.parse(_amountCtrl.text),
+      targetAmount: _parsedAmount,
       targetYear: int.parse(_yearCtrl.text),
       type: _type,
       priority: _priority,
       propertyValue: _type == 'down_payment'
-          ? double.tryParse(_propertyValueCtrl.text)
+          ? _parsedProperty
           : null,
       downPaymentPct: _type == 'down_payment'
-          ? (double.tryParse(_dpPctCtrl.text) ?? 20) / 100
+          ? _dpPct / 100
           : null,
       adjustForInflation: _adjustForInflation,
     );
@@ -148,47 +195,58 @@ class _GoalFormState extends ConsumerState<GoalForm> {
                 TextFormField(
                   controller: _propertyValueCtrl,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
+                  inputFormatters: [IndianCurrencyFormatter()],
+                  decoration: InputDecoration(
                     labelText: 'Property Value (₹)',
                     prefixText: '₹ ',
+                    helperText: _parsedProperty > 0 ? formatLakhsCrores(_parsedProperty) : null,
                   ),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Enter property value';
-                    final val = double.tryParse(v);
-                    if (val == null || val <= 0) return 'Enter a positive amount';
+                    if (_parsedProperty <= 0) return 'Enter a positive amount';
                     return null;
                   },
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
-                  controller: _dpPctCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Down Payment %',
-                    suffixText: '%',
-                  ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Enter percentage';
-                    final val = double.tryParse(v);
-                    if (val == null || val < 0 || val > 100) {
-                      return 'Enter percentage between 0 and 100';
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Down Payment %', style: theme.textTheme.bodySmall),
+                    Text('${_dpPct.toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                Slider(
+                  value: _dpPct,
+                  min: 0,
+                  max: 100,
+                  divisions: 1000,
+                  label: '${_dpPct.toStringAsFixed(1)}%',
+                  onChanged: (val) {
+                    setState(() {
+                      _dpPct = val;
+                    });
+                    final propVal = _parsedProperty;
+                    if (propVal > 0) {
+                      final newAmt = propVal * (val / 100);
+                      _amountCtrl.text = NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 0).format(newAmt).trim();
                     }
-                    return null;
                   },
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 4),
               ],
               TextFormField(
                 controller: _amountCtrl,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
+                inputFormatters: [IndianCurrencyFormatter()],
+                decoration: InputDecoration(
                   labelText: 'Target Amount (₹)',
                   prefixText: '₹ ',
+                  helperText: _parsedAmount > 0 ? formatLakhsCrores(_parsedAmount) : null,
                 ),
                 validator: (v) {
                   if (v == null || v.isEmpty) return 'Enter amount';
-                  final val = double.tryParse(v);
-                  if (val == null || val <= 0) return 'Enter a positive amount';
+                  if (_parsedAmount <= 0) return 'Enter a positive amount';
                   return null;
                 },
               ),
@@ -237,7 +295,7 @@ class _GoalFormState extends ConsumerState<GoalForm> {
                     child: ChoiceChip(
                       label: Text(p.toUpperCase()),
                       selected: _priority == p,
-                      selectedColor: const Color(0xFF2E2E2E),
+                      selectedColor: const Color(0xFF1F2128),
                       onSelected: (_) => setState(() => _priority = p),
                       labelStyle: TextStyle(
                         color: _priority == p ? colorsMap[p] : null,

@@ -87,11 +87,12 @@ double calculateTakeHome(double ctcLpa, String regime) {
 // STEPPED SALARY HIKES
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Computes CTC at a given year using stepped hike brackets.
-/// Year 0 = starting CTC, year 1 = first hike applied, etc.
-double ctcAtYear(UserProfile profile, int year) {
+/// Computes CTC using stepped hike brackets after [hikes] number of hikes.
+/// hikes = 0 -> starting CTC (Rate during Year 1)
+/// hikes = 1 -> CTC after first hike (Rate during Year 2)
+double ctcAtYear(UserProfile profile, int hikes) {
   double ctc = profile.startingCtcLpa;
-  for (int y = 1; y <= year; y++) {
+  for (int y = 1; y <= hikes; y++) {
     ctc *= (1 + profile.hikeRateForYear(y));
   }
   return ctc;
@@ -110,16 +111,7 @@ double additionalMonthlyIncome(List<IncomeSource> sources, int year) {
   return total;
 }
 
-/// Total monthly income (salary take-home + additional sources) at a given year.
-double totalMonthlyIncome(
-  UserProfile profile,
-  List<IncomeSource> incomeSources,
-  int year,
-) {
-  final ctc = ctcAtYear(profile, year);
-  final salaryTakeHome = calculateTakeHome(ctc, profile.taxRegime);
-  return salaryTakeHome + additionalMonthlyIncome(incomeSources, year);
-}
+// (totalMonthlyIncome removed)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EMERGENCY FUND
@@ -156,10 +148,12 @@ double _baseMonthlyExpenses(UserProfile profile) =>
     profile.monthlyTransport +
     profile.monthlyMisc;
 
-/// Monthly expenses at a given year (inflated).
-double getMonthlyExpenses(UserProfile profile, int year, double inflation) {
+/// Monthly expenses after [inflations] number of years of inflation.
+/// inflations = 0 -> current expenses (Rate during Year 1)
+/// inflations = 1 -> expenses after 1 year of inflation (Rate during Year 2)
+double getMonthlyExpenses(UserProfile profile, int inflations, double inflationRate) {
   final base = _baseMonthlyExpenses(profile);
-  return base * math.pow(1 + inflation, year);
+  return base * math.pow(1 + inflationRate, inflations);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -293,16 +287,19 @@ List<YearProjection> generateProjection(
   final fundedGoals = <String>{};
 
   for (int y = 0; y <= 20; y++) {
-    final ctcThisYear = ctcAtYear(profile, y);
+    final int rateIndex = y == 0 ? 0 : y - 1;
+    final int calendarYear = y == 0 ? 1 : y;
+
+    final ctcThisYear = ctcAtYear(profile, rateIndex);
     final salaryTakeHome = calculateTakeHome(ctcThisYear, profile.taxRegime);
-    final extraIncome = additionalMonthlyIncome(incomeSources, y);
+    final extraIncome = additionalMonthlyIncome(incomeSources, calendarYear);
     final totalIncome = salaryTakeHome + extraIncome;
 
     final sipMonthly = totalIncome * profile.sipRatePct;
     final expenses =
-        getMonthlyExpenses(profile, y, assumptions.expenseInflation);
+        getMonthlyExpenses(profile, rateIndex, assumptions.expenseInflation);
     final freeCash = totalIncome - expenses - sipMonthly;
-    final techSpend = annualPurchaseSpend(purchases, y);
+    final techSpend = annualPurchaseSpend(purchases, calendarYear);
     final corpus = y == 0
         ? 0.0
         : corpusAtYear(y, profile, purchases, assumptions,
@@ -484,4 +481,13 @@ void verifyFinanceEngine() {
   final ctcY1 = ctcAtYear(testProfile, 1);
   assert(ctcY1 > 11.9 && ctcY1 < 12.1,
       'Expected ~12 LPA at year 1 with 20% bracket, got $ctcY1');
+
+  // Verify generateProjection alignment
+  final projections = generateProjection(testProfile, [], [], Assumptions.defaults());
+  final year1 = projections.firstWhere((p) => p.year == 1);
+  final expectedTakeHome = calculateTakeHome(testProfile.startingCtcLpa, testProfile.taxRegime);
+  assert(
+    (year1.takeHomeMonthly - expectedTakeHome).abs() < 1.0,
+    'Year 1 take-home (${year1.takeHomeMonthly}) should exactly match current CTC take-home ($expectedTakeHome)',
+  );
 }

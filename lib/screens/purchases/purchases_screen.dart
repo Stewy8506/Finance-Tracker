@@ -46,10 +46,10 @@ class PurchasesScreen extends ConsumerWidget {
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E1E1E),
+                        color: const Color(0xFF111215),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                            color: const Color(0xFF2E2E2E)),
+                            color: const Color(0xFF1F2128)),
                       ),
                       child: Row(
                         children: [
@@ -102,7 +102,7 @@ class PurchasesScreen extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF262626),
+                              color: const Color(0xFF1F2128),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
@@ -136,7 +136,7 @@ class PurchasesScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
-                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                const SliverToBoxAdapter(child: SizedBox(height: 120)),
               ],
             ),
     );
@@ -173,7 +173,7 @@ class PurchasesScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: const Color(0xFF111215),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => PurchaseForm(existing: existing),
