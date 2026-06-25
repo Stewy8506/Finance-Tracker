@@ -127,9 +127,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       margin: const EdgeInsets.only(bottom: 16),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: colors.high.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: colors.high),
+                        color: colors.high.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: colors.high.withValues(alpha: 0.3), width: 0.6),
                       ),
                       child: Row(
                         children: [
@@ -157,9 +157,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       margin: const EdgeInsets.only(bottom: 16),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: theme.colorScheme.primary),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3), width: 0.6),
                       ),
                       child: Row(
                         children: [
@@ -1240,9 +1240,19 @@ class _NetWorthCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF111215),
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF818CF8).withValues(alpha: 0.15),
+            const Color(0xFFC084FC).withValues(alpha: 0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1F2128)),
+        border: Border.all(
+          color: const Color(0xFF818CF8).withValues(alpha: 0.25),
+          width: 0.8,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1352,9 +1362,12 @@ class _FinancialHealthScoreCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF111215),
+          color: const Color(0xFF111215).withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF1F2128)),
+          border: Border.all(
+            color: statusColor.withValues(alpha: 0.3),
+            width: 0.8,
+          ),
         ),
         child: Row(
           children: [
@@ -1701,9 +1714,9 @@ class _AdvisorHistoryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF111215),
+        color: const Color(0xFF111215).withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1F2128), width: 0.8),
+        border: Border.all(color: const Color(0xFF1F2128).withValues(alpha: 0.6), width: 0.6),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1744,26 +1757,34 @@ class _AdvisorHistoryCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildStatItem(
-                  theme: theme,
-                  icon: Icons.check_circle_outline,
-                  iconColor: colors.success,
-                  value: '$thisMonthCount applied',
-                  label: 'This Month',
+                Expanded(
+                  child: _buildStatItem(
+                    theme: theme,
+                    icon: Icons.check_circle_outline,
+                    iconColor: colors.success,
+                    value: '$thisMonthCount applied',
+                    label: 'This Month',
+                  ),
                 ),
-                _buildStatItem(
-                  theme: theme,
-                  icon: Icons.monetization_on_outlined,
-                  iconColor: theme.colorScheme.primary,
-                  value: formatCurrency(totalFreed),
-                  label: 'Cash Flow Freed',
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildStatItem(
+                    theme: theme,
+                    icon: Icons.monetization_on_outlined,
+                    iconColor: theme.colorScheme.primary,
+                    value: formatCurrency(totalFreed),
+                    label: 'Cash Flow Freed',
+                  ),
                 ),
-                _buildStatItem(
-                  theme: theme,
-                  icon: Icons.trending_up,
-                  iconColor: colors.success,
-                  value: '+${formatCurrency(totalCorpusImprovement)}',
-                  label: '10-Yr Corpus Est.',
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildStatItem(
+                    theme: theme,
+                    icon: Icons.trending_up,
+                    iconColor: colors.success,
+                    value: '+${formatCurrency(totalCorpusImprovement)}',
+                    label: '10-Yr Corpus Est.',
+                  ),
                 ),
               ],
             ),
@@ -1787,11 +1808,14 @@ class _AdvisorHistoryCard extends StatelessWidget {
           children: [
             Icon(icon, color: iconColor, size: 14),
             const SizedBox(width: 4),
-            Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                fontSize: 10,
+            Expanded(
+              child: Text(
+                label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  fontSize: 10,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

@@ -1,6 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../models/suggestion.dart';
 import '../../../models/recurring_purchase.dart';
 import '../../../models/sip_restore.dart';
@@ -329,208 +329,222 @@ class _SuggestionCardState extends ConsumerState<SuggestionCard> {
     final incomeSources = ref.watch(incomeSourcesProvider);
     final sipRestores = ref.watch(sipRestoreProvider);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1F2128), width: 0.8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(iconData, color: itemColor, size: 12),
-                    const SizedBox(width: 4),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        color: itemColor,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                'Score: ${widget.suggestion.impactScore.toStringAsFixed(0)}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          Text(
-            widget.suggestion.title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.2,
-            ),
-          ),
-          const SizedBox(height: 4),
-
-          Text(
-            widget.suggestion.description,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          child: Container(
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFF1F2128),
-              borderRadius: BorderRadius.circular(8),
+              color: const Color(0xFF111215).withValues(alpha: 0.75),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF1F2128).withValues(alpha: 0.5), width: 0.6),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  isInformational ? Icons.info_outline : Icons.flash_on,
-                  color: isInformational ? Colors.blue : ledgerColors.success,
-                  size: 14,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    widget.suggestion.impact,
-                    style: TextStyle(
-                      color: isInformational ? Colors.blue : ledgerColors.success,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          Container(
-            height: 4,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1F2128),
-              borderRadius: BorderRadius.circular(2),
-            ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: FractionallySizedBox(
-                widthFactor: (widget.suggestion.impactScore / 100.0).clamp(0.0, 1.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(2),
-                    gradient: LinearGradient(
-                      colors: [
-                        itemColor.withValues(alpha: 0.6),
-                        itemColor,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // Simulation Expand Button (not relevant/needed for purely informational cards without changes)
-          if (profile != null) ...[
-            const SizedBox(height: 8),
-            InkWell(
-              onTap: () {
-                setState(() {
-                  _isExpanded = !_isExpanded;
-                });
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Row(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      _isExpanded ? 'Hide Impact Preview' : 'Preview Impact (What-If Analysis)',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w600,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: bgColor,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(iconData, color: itemColor, size: 12),
+                          const SizedBox(width: 4),
+                          Text(
+                            label,
+                            style: TextStyle(
+                              color: itemColor,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                      size: 16,
-                      color: theme.colorScheme.primary,
+                    Text(
+                      'Score: ${widget.suggestion.impactScore.toStringAsFixed(0)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ),
-            if (_isExpanded) ...[
-              const SizedBox(height: 8),
-              _buildSimulationPanel(
-                context: context,
-                theme: theme,
-                colors: ledgerColors,
-                result: simulateSuggestion(
-                  suggestion: widget.suggestion,
-                  profile: profile,
-                  purchases: purchases,
-                  goals: goals,
-                  assumptions: assumptions,
-                  incomeSources: incomeSources,
-                  sipRestores: sipRestores,
-                ),
-              ),
-            ],
-          ],
+                const SizedBox(height: 10),
 
-          const SizedBox(height: 14),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: _dismissSuggestion,
-                style: TextButton.styleFrom(
-                  foregroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                Text(
+                  widget.suggestion.title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.2,
+                  ),
                 ),
-                child: Text(isInformational ? 'Got it' : 'Dismiss'),
-              ),
-              if (!isInformational) ...[
-                const SizedBox(width: 8),
-                FilledButton.icon(
-                  onPressed: () => _applySuggestion(context),
-                  icon: const Icon(Icons.check, size: 16),
-                  label: const Text('Apply'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: const Color(0xFF08090A),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                const SizedBox(height: 4),
+
+                Text(
+                  widget.suggestion.description,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1F2128).withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isInformational ? Icons.info_outline : Icons.flash_on,
+                        color: isInformational ? Colors.blue : ledgerColors.success,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          widget.suggestion.impact,
+                          style: TextStyle(
+                            color: isInformational ? Colors.blue : ledgerColors.success,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                Container(
+                  height: 4,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1F2128),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: FractionallySizedBox(
+                      widthFactor: (widget.suggestion.impactScore / 100.0).clamp(0.0, 1.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(2),
+                          gradient: LinearGradient(
+                            colors: [
+                              itemColor.withValues(alpha: 0.6),
+                              itemColor,
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
+
+                // Simulation Expand Button (not relevant/needed for purely informational cards without changes)
+                if (profile != null) ...[
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        _isExpanded = !_isExpanded;
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        children: [
+                          Text(
+                            _isExpanded ? 'Hide Impact Preview' : 'Preview Impact (What-If Analysis)',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                            size: 16,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    child: _isExpanded
+                        ? Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: _buildSimulationPanel(
+                              context: context,
+                              theme: theme,
+                              colors: ledgerColors,
+                              result: simulateSuggestion(
+                                suggestion: widget.suggestion,
+                                profile: profile,
+                                purchases: purchases,
+                                goals: goals,
+                                assumptions: assumptions,
+                                incomeSources: incomeSources,
+                                sipRestores: sipRestores,
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+
+                const SizedBox(height: 14),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: _dismissSuggestion,
+                      style: TextButton.styleFrom(
+                        foregroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      child: Text(isInformational ? 'Got it' : 'Dismiss'),
+                    ),
+                    if (!isInformational) ...[
+                      const SizedBox(width: 8),
+                      FilledButton.icon(
+                        onPressed: () => _applySuggestion(context),
+                        icon: const Icon(Icons.check, size: 16),
+                        label: const Text('Apply'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: const Color(0xFF08090A),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ],
-            ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -551,9 +565,9 @@ class _SuggestionCardState extends ConsumerState<SuggestionCard> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF131418),
+        color: const Color(0xFF131418).withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF1F2128), width: 0.8),
+        border: Border.all(color: const Color(0xFF1F2128).withValues(alpha: 0.5), width: 0.6),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -573,13 +587,17 @@ class _SuggestionCardState extends ConsumerState<SuggestionCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Deficit Status',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
+              Expanded(
+                child: Text(
+                  'Deficit Status',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               if (!hasDeficitsBefore)
                 Text(
                   'Healthy (No Deficits) ✅',
@@ -628,14 +646,19 @@ class _SuggestionCardState extends ConsumerState<SuggestionCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '10-Year Net Worth Projection',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
+              Expanded(
+                child: Text(
+                  '10-Year Net Worth Projection',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     formatCurrency(result.corpusYear10Before),
