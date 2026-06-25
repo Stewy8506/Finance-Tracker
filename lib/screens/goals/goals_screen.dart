@@ -5,6 +5,7 @@ import '../../providers/goals_provider.dart';
 import 'widgets/empty_goals.dart';
 import 'widgets/goal_card.dart';
 import 'widgets/goal_form.dart';
+import 'widgets/goal_suggestions_panel.dart';
 
 class GoalsScreen extends ConsumerWidget {
   const GoalsScreen({super.key});
@@ -38,15 +39,31 @@ class GoalsScreen extends ConsumerWidget {
       ),
       body: goals.isEmpty
           ? EmptyGoals(onAdd: () => _showGoalSheet(context, ref, null))
-          : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-              itemCount: goals.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 12),
-              itemBuilder: (context, i) => GoalCard(
-                goal: goals[i],
-                onEdit: () => _showGoalSheet(context, ref, goals[i]),
-                onDelete: () => _deleteGoal(context, ref, goals[i]),
-              ),
+          : CustomScrollView(
+              slivers: [
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: GoalSuggestionsPanel(),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, i) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: GoalCard(
+                          goal: goals[i],
+                          onEdit: () => _showGoalSheet(context, ref, goals[i]),
+                          onDelete: () => _deleteGoal(context, ref, goals[i]),
+                        ),
+                      ),
+                      childCount: goals.length,
+                    ),
+                  ),
+                ),
+              ],
             ),
     );
   }
