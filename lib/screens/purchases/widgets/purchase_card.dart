@@ -36,9 +36,8 @@ class PurchaseCard extends StatelessWidget {
     return Dismissible(
       key: Key(purchase.id),
       direction: DismissDirection.endToStart,
-      confirmDismiss: (_) async {
+      onDismissed: (_) {
         onDelete();
-        return false;
       },
       background: Container(
         alignment: Alignment.centerRight,

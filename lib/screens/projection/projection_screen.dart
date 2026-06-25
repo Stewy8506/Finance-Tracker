@@ -312,8 +312,13 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
                         );
                       }).toList(),
                       verticalLines: goals.map((g) {
-                        final fundedYear = finance.yearsToGoal(
-                            g, profile, purchases, assumptions);
+                        int fundedYear = 0;
+                        for (final p in projections) {
+                          if (p.fundedGoalIds.contains(g.id)) {
+                            fundedYear = p.year;
+                            break;
+                          }
+                        }
                         if (fundedYear == 0) return null;
                         final c = g.priority == 'high'
                             ? colors.high
@@ -838,7 +843,7 @@ class _WhatIfTabState extends ConsumerState<_WhatIfTab> {
                     barWidth: 2.5,
                     isCurved: true,
                     dotData: const FlDotData(show: false),
-                    dashArray: [0],
+                    dashArray: [5, 5],
                   ),
                 ],
               ),

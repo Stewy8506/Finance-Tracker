@@ -8,6 +8,7 @@ class YearProjection {
   final double techSpendAnnual;
   final double corpus;
   final List<String> goalsFunded;
+  final List<String> fundedGoalIds;
   final double expensesMonthly;
   final double freeCashMonthly;
 
@@ -25,6 +26,7 @@ class YearProjection {
     required this.techSpendAnnual,
     required this.corpus,
     required this.goalsFunded,
+    this.fundedGoalIds = const [],
     required this.expensesMonthly,
     required this.freeCashMonthly,
     this.additionalIncome = 0,

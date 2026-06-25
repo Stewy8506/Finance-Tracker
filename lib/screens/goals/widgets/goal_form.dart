@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../models/goal.dart';
 import '../../../providers/goals_provider.dart';
+import '../../../providers/assumptions_provider.dart';
 import '../../../utils/currency_formatter.dart';
 import '../../../utils/formatters.dart';
 import 'package:intl/intl.dart';
+import 'dart:math' as math;
 
 class GoalForm extends ConsumerStatefulWidget {
   final Goal? existing;
@@ -133,6 +135,16 @@ class _GoalFormState extends ConsumerState<GoalForm> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final assumptions = ref.watch(assumptionsProvider);
+    
+    // Live compute inflated value
+    double inflatedAmount = 0;
+    if (_adjustForInflation && _parsedAmount > 0) {
+      final years = int.tryParse(_yearCtrl.text) ?? 0;
+      if (years > 0) {
+        inflatedAmount = _parsedAmount * math.pow(1 + assumptions.expenseInflation, years);
+      }
+    }
 
     return Padding(
       padding: EdgeInsets.only(
@@ -143,6 +155,7 @@ class _GoalFormState extends ConsumerState<GoalForm> {
       ),
       child: Form(
         key: _formKey,
+        onChanged: () => setState(() {}),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -278,6 +291,18 @@ class _GoalFormState extends ConsumerState<GoalForm> {
                   const Text('Adjust target amount for inflation'),
                 ],
               ),
+              if (_adjustForInflation && inflatedAmount > 0)
+                Padding(
+                  padding: const EdgeInsets.only(left: 60, top: 4),
+                  child: Text(
+                    'Will be roughly ${formatCurrency(inflatedAmount)} by Year ${int.tryParse(_yearCtrl.text) ?? 0}',
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               const SizedBox(height: 16),
               // Priority
               Text('Priority', style: theme.textTheme.bodySmall),

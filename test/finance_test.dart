@@ -90,8 +90,8 @@ void main() {
         adjustForInflation: true,
       );
 
-      final yearsNoInf = finance.yearsToGoal(goalNoInflation, profile, purchases, assumptions);
-      final yearsWithInf = finance.yearsToGoal(goalWithInflation, profile, purchases, assumptions);
+      final yearsNoInf = finance.yearsToGoal(goalNoInflation, profile, [goalNoInflation], purchases, assumptions);
+      final yearsWithInf = finance.yearsToGoal(goalWithInflation, profile, [goalWithInflation], purchases, assumptions);
 
       expect(yearsNoInf, isPositive);
       expect(yearsWithInf, isPositive);

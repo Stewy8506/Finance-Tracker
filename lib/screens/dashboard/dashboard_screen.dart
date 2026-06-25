@@ -54,7 +54,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     final expenses = year1.expensesMonthly;
     final sip = year1.sipMonthly;
-    final freeCash = year1.freeCashMonthly;
+    final techSpendMonthly = year1.techSpendAnnual / 12;
+    final freeCash = year1.freeCashMonthly - techSpendMonthly;
     final takeHome = year1.totalIncome > 0 ? year1.totalIncome : year1.takeHomeMonthly;
     final hasExtraIncome = year1.additionalIncome > 0;
     final emergencyMonths = finance.emergencyFundMonths(profile);
@@ -265,6 +266,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   _BudgetPieChart(
                     expenses: expenses,
                     sip: sip,
+                    purchases: techSpendMonthly,
                     freeCash: freeCash > 0 ? freeCash : 0,
                     total: takeHome,
                     tappedIndex: _tappedPieIndex,
@@ -276,8 +278,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     takeHome: takeHome,
                     expenses: expenses,
                     sip: sip,
-                    purchases: finance.annualPurchaseSpend(purchases, 1) / 12,
-                    freeCash: takeHome - expenses - sip - (finance.annualPurchaseSpend(purchases, 1) / 12),
+                    purchases: techSpendMonthly,
+                    freeCash: freeCash > 0 ? freeCash : 0,
                   ),
                 const SizedBox(height: 24),
 
@@ -484,6 +486,7 @@ class _SectionHeader extends StatelessWidget {
 class _BudgetPieChart extends StatelessWidget {
   final double expenses;
   final double sip;
+  final double purchases;
   final double freeCash;
   final double total;
   final int? tappedIndex;
@@ -492,6 +495,7 @@ class _BudgetPieChart extends StatelessWidget {
   const _BudgetPieChart({
     required this.expenses,
     required this.sip,
+    required this.purchases,
     required this.freeCash,
     required this.total,
     required this.tappedIndex,
@@ -506,6 +510,7 @@ class _BudgetPieChart extends StatelessWidget {
     final segments = [
       _PieSegment('Expenses', expenses, colors.high),
       _PieSegment('SIP', sip, theme.colorScheme.primary),
+      _PieSegment('Purchases', purchases, colors.warning),
       _PieSegment('Free Cash', freeCash, colors.success),
     ];
 
@@ -684,9 +689,8 @@ class _SpendCalendarState extends State<_SpendCalendar> {
     // Group purchases by month deterministically based on p.id hash
     final purchasesByMonth = List.generate(12, (_) => <RecurringPurchase>[]);
     for (final p in purchasesList) {
-      if (p.firstYear == 1) {
-        final monthIdx = (p.id.hashCode.abs() % 12);
-        purchasesByMonth[monthIdx].add(p);
+      if (p.firstYear == 1 && p.targetMonth != null) {
+        purchasesByMonth[p.targetMonth!].add(p);
       }
     }
 
@@ -901,8 +905,13 @@ class _MilestoneCard extends StatelessWidget {
         currentCorpus > 0 && goal.targetAmount > 0
             ? (currentCorpus / goal.targetAmount).clamp(0.0, 1.0)
             : 0.0;
-    final fundedYear = finance.yearsToGoal(
-        goal, profile, purchases, assumptions);
+    int fundedYear = 0;
+    for (final p in projections) {
+      if (p.fundedGoalIds.contains(goal.id)) {
+        fundedYear = p.year;
+        break;
+      }
+    }
     final startYear = profile.startYear ?? DateTime.now().year;
     final fundedLabel = fundedYear > 0
         ? 'by ${startYear + fundedYear}'
@@ -1348,7 +1357,13 @@ class _FinancialHealthScoreCard extends StatelessWidget {
     int onTrackCount = 0;
     if (goals.isNotEmpty) {
       for (final g in goals) {
-        final fundedYear = finance.yearsToGoal(g, profile, purchases, assumptions, incomeSources: incomeSources);
+        int fundedYear = 0;
+        for (final p in projections) {
+          if (p.fundedGoalIds.contains(g.id)) {
+            fundedYear = p.year;
+            break;
+          }
+        }
         if (fundedYear > 0 && fundedYear <= g.targetYear) {
           onTrackCount++;
         }

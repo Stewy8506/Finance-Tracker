@@ -195,67 +195,134 @@ double totalSpendOverYears(RecurringPurchase p, int horizonYears) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CORPUS
+// PROJECTION ENGINE
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Cumulative corpus at end of [targetYear].
-/// Now uses stepped hike brackets and additional income sources.
-double corpusAtYear(
-  int targetYear,
+int _priorityScore(String p) {
+  if (p == 'high') return 3;
+  if (p == 'medium') return 2;
+  return 1;
+}
+
+/// Computes the full financial projection and actively deducts funded goals from the corpus.
+/// Uses Option B + Option C:
+/// - Goals are funded in targetYear order (if multiple, Priority decides).
+/// - If short, goal waits (delayed gratification) without going into negative debt.
+List<YearProjection> generateProjection(
   UserProfile profile,
+  List<Goal> goals,
   List<RecurringPurchase> purchases,
   Assumptions assumptions, {
   List<IncomeSource> incomeSources = const [],
+  int maxYears = 30,
 }) {
-  double sipCorpus = 0;
+  final projections = <YearProjection>[];
+  final fundedGoals = <String>{};
+  
   double cashCorpus = 0;
+  double sipCorpus = 0;
 
-  for (int y = 1; y <= targetYear; y++) {
-    final ctcThisYear = ctcAtYear(profile, y - 1);
+  // Sort goals by targetYear ascending, then priority descending
+  final sortedGoals = List<Goal>.from(goals)
+    ..sort((a, b) {
+      if (a.targetYear != b.targetYear) return a.targetYear.compareTo(b.targetYear);
+      return _priorityScore(b.priority).compareTo(_priorityScore(a.priority));
+    });
+
+  for (int y = 0; y <= maxYears; y++) {
+    if (y == 0) {
+      projections.add(YearProjection(
+        year: 0,
+        ctcLpa: profile.startingCtcLpa,
+        takeHomeMonthly: calculateTakeHome(profile.startingCtcLpa, profile.taxRegime),
+        sipMonthly: 0,
+        techSpendAnnual: 0,
+        corpus: 0,
+        goalsFunded: [],
+        fundedGoalIds: [],
+        expensesMonthly: getMonthlyExpenses(profile, 0, assumptions.expenseInflation),
+        freeCashMonthly: 0,
+        additionalIncome: 0,
+        totalIncome: 0,
+      ));
+      continue;
+    }
+
+    final int rateIndex = y - 1;
+    final ctcThisYear = ctcAtYear(profile, rateIndex);
     final salaryTakeHome = calculateTakeHome(ctcThisYear, profile.taxRegime);
     final extraIncome = additionalMonthlyIncome(incomeSources, y);
     final totalIncome = salaryTakeHome + extraIncome;
 
-    final expenses =
-        getMonthlyExpenses(profile, y - 1, assumptions.expenseInflation);
     final sipMonthly = totalIncome * profile.sipRatePct;
+    final expenses = getMonthlyExpenses(profile, rateIndex, assumptions.expenseInflation);
     final freeCash = totalIncome - expenses - sipMonthly;
-    final discretionary = annualPurchaseSpend(purchases, y);
+    final discSpend = annualPurchaseSpend(purchases, y);
 
-    // SIP invested this year, compounded for remaining years
-    final monthsRemaining = (targetYear - y) * 12;
+    // 1. Grow existing corpus
+    cashCorpus *= (1 + assumptions.cashSavingsRate);
+    sipCorpus *= (1 + assumptions.sipReturnRate);
+
+    // 2. Add new cash
     final sipThisYear = sipFutureValue(sipMonthly, 12, assumptions.sipReturnRate);
-    sipCorpus +=
-        sipThisYear * math.pow(1 + assumptions.sipReturnRate / 12, monthsRemaining);
+    sipCorpus += sipThisYear;
 
-    // Cash savings
-    final annualFreeCash = (freeCash * 12) - discretionary;
+    final annualFreeCash = (freeCash * 12) - discSpend;
     if (annualFreeCash > 0) {
-      cashCorpus += annualFreeCash *
-          math.pow(1 + assumptions.cashSavingsRate, targetYear - y);
+      cashCorpus += annualFreeCash;
     }
+
+    // 3. Fund goals
+    final newlyFundedNames = <String>[];
+    final newlyFundedIds = <String>[];
+    
+    for (final goal in sortedGoals) {
+      if (fundedGoals.contains(goal.id)) continue;
+      
+      // Goal is eligible if we reached its targetYear (or we are past it and it was delayed)
+      if (y >= goal.targetYear) {
+        final target = goal.adjustForInflation == true
+            ? goal.targetAmount * math.pow(1 + assumptions.expenseInflation, y)
+            : goal.targetAmount;
+            
+        final totalCorpus = cashCorpus + sipCorpus;
+        
+        if (totalCorpus >= target) {
+          // Fund it! Deduct from corpus
+          if (cashCorpus >= target) {
+            cashCorpus -= target;
+          } else {
+            final remaining = target - cashCorpus;
+            cashCorpus = 0;
+            sipCorpus -= remaining;
+          }
+          
+          fundedGoals.add(goal.id);
+          newlyFundedNames.add(goal.name);
+          newlyFundedIds.add(goal.id);
+        }
+      }
+    }
+
+    final currentCorpus = cashCorpus + sipCorpus;
+
+    projections.add(YearProjection(
+      year: y,
+      ctcLpa: ctcThisYear,
+      takeHomeMonthly: salaryTakeHome,
+      sipMonthly: sipMonthly,
+      techSpendAnnual: discSpend,
+      corpus: currentCorpus,
+      goalsFunded: newlyFundedNames,
+      fundedGoalIds: newlyFundedIds,
+      expensesMonthly: expenses,
+      freeCashMonthly: freeCash,
+      additionalIncome: extraIncome,
+      totalIncome: totalIncome,
+    ));
   }
 
-  return sipCorpus + cashCorpus;
-}
-
-/// Year corpus first crosses goal.targetAmount (0 if never within 30 years).
-int yearsToGoal(
-  Goal goal,
-  UserProfile profile,
-  List<RecurringPurchase> purchases,
-  Assumptions assumptions, {
-  List<IncomeSource> incomeSources = const [],
-}) {
-  for (int y = 1; y <= 30; y++) {
-    final corpus = corpusAtYear(y, profile, purchases, assumptions,
-        incomeSources: incomeSources);
-    final target = goal.adjustForInflation == true
-        ? goal.targetAmount * math.pow(1 + assumptions.expenseInflation, y)
-        : goal.targetAmount;
-    if (corpus >= target) return y;
-  }
-  return 0;
+  return projections;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -272,66 +339,31 @@ double monthlyEmi(double loanAmount, double annualRate, int tenureYears) {
   return loanAmount * r * factor / (factor - 1);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// FULL PROJECTION
-// ─────────────────────────────────────────────────────────────────────────────
-
-List<YearProjection> generateProjection(
+/// Kept for backward compatibility, but runs a global simulation 
+/// internally to find when a specific goal is funded.
+int yearsToGoal(
+  Goal goal,
   UserProfile profile,
-  List<Goal> goals,
+  List<Goal> allGoals,
   List<RecurringPurchase> purchases,
   Assumptions assumptions, {
   List<IncomeSource> incomeSources = const [],
 }) {
-  final projections = <YearProjection>[];
-  final fundedGoals = <String>{};
-
-  for (int y = 0; y <= 20; y++) {
-    final int rateIndex = y == 0 ? 0 : y - 1;
-    final int calendarYear = y == 0 ? 1 : y;
-
-    final ctcThisYear = ctcAtYear(profile, rateIndex);
-    final salaryTakeHome = calculateTakeHome(ctcThisYear, profile.taxRegime);
-    final extraIncome = additionalMonthlyIncome(incomeSources, calendarYear);
-    final totalIncome = salaryTakeHome + extraIncome;
-
-    final sipMonthly = totalIncome * profile.sipRatePct;
-    final expenses =
-        getMonthlyExpenses(profile, rateIndex, assumptions.expenseInflation);
-    final freeCash = totalIncome - expenses - sipMonthly;
-    final techSpend = annualPurchaseSpend(purchases, calendarYear);
-    final corpus = y == 0
-        ? 0.0
-        : corpusAtYear(y, profile, purchases, assumptions,
-            incomeSources: incomeSources);
-
-    final newlyFunded = <String>[];
-    for (final goal in goals) {
-      final target = goal.adjustForInflation == true
-          ? goal.targetAmount * math.pow(1 + assumptions.expenseInflation, y)
-          : goal.targetAmount;
-      if (!fundedGoals.contains(goal.id) && corpus >= target) {
-        fundedGoals.add(goal.id);
-        newlyFunded.add(goal.name);
-      }
+  final projections = generateProjection(
+    profile,
+    allGoals,
+    purchases,
+    assumptions,
+    incomeSources: incomeSources,
+    maxYears: 30,
+  );
+  
+  for (final p in projections) {
+    if (p.fundedGoalIds.contains(goal.id)) {
+      return p.year;
     }
-
-    projections.add(YearProjection(
-      year: y,
-      ctcLpa: ctcThisYear,
-      takeHomeMonthly: salaryTakeHome,
-      sipMonthly: sipMonthly,
-      techSpendAnnual: techSpend,
-      corpus: corpus,
-      goalsFunded: newlyFunded,
-      expensesMonthly: expenses,
-      freeCashMonthly: freeCash,
-      additionalIncome: extraIncome,
-      totalIncome: totalIncome,
-    ));
   }
-
-  return projections;
+  return 0;
 }
 
 /// Computes a unified financial health score from 0 to 100 based on weighted factors.
@@ -381,7 +413,13 @@ int financialHealthScore(
   if (goals.isNotEmpty) {
     int onTrackCount = 0;
     for (final g in goals) {
-      final fundedYear = yearsToGoal(g, profile, purchases, assumptions, incomeSources: incomeSources);
+      int fundedYear = 0;
+      for (final p in projections) {
+        if (p.fundedGoalIds.contains(g.id)) {
+          fundedYear = p.year;
+          break;
+        }
+      }
       if (fundedYear > 0 && fundedYear <= g.targetYear) {
         onTrackCount++;
       }

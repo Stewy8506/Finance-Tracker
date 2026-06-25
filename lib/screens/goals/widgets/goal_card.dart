@@ -6,7 +6,6 @@ import '../../../finance.dart' as finance;
 import '../../../models/goal.dart';
 import '../../../models/assumptions.dart';
 import '../../../providers/user_profile_provider.dart';
-import '../../../providers/purchases_provider.dart';
 import '../../../providers/assumptions_provider.dart';
 import '../../../providers/projection_provider.dart';
 import '../../../theme.dart';
@@ -29,7 +28,7 @@ class GoalCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final colors = theme.extension<LedgerColors>()!;
     final profile = ref.watch(userProfileProvider);
-    final purchases = ref.watch(purchasesProvider);
+
     final assumptions = ref.watch(assumptionsProvider);
     final projections = ref.watch(projectionProvider);
 
@@ -39,9 +38,13 @@ class GoalCard extends ConsumerWidget {
             ? colors.warning
             : colors.success;
 
-    final fundedYear = profile != null
-        ? finance.yearsToGoal(goal, profile, purchases, assumptions)
-        : 0;
+    int fundedYear = 0;
+    for (final p in projections) {
+      if (p.fundedGoalIds.contains(goal.id)) {
+        fundedYear = p.year;
+        break;
+      }
+    }
     final onTrack = fundedYear > 0 && fundedYear <= goal.targetYear;
 
     // EMI calc for down_payment goals
@@ -66,9 +69,8 @@ class GoalCard extends ConsumerWidget {
     return Dismissible(
       key: Key(goal.id),
       direction: DismissDirection.endToStart,
-      confirmDismiss: (_) async {
+      onDismissed: (_) {
         onDelete();
-        return false;
       },
       background: Container(
         alignment: Alignment.centerRight,
@@ -266,11 +268,16 @@ class _GoalSparkline extends StatelessWidget {
   Widget build(BuildContext context) {
     if (projections.isEmpty) return const SizedBox.shrink();
 
-    final spots = projections.map((p) {
+    final corpusSpots = projections.map((p) {
       return FlSpot(p.year.toDouble(), p.corpus / 100000);
     }).toList();
 
-    final targetVal = goal.targetAmount / 100000;
+    final targetSpots = projections.map((p) {
+      final targetAtYear = goal.adjustForInflation == true
+          ? goal.targetAmount * math.pow(1 + assumptions.expenseInflation, p.year)
+          : goal.targetAmount;
+      return FlSpot(p.year.toDouble(), targetAtYear / 100000);
+    }).toList();
 
     int intersectionYear = 0;
     for (final p in projections) {
@@ -283,10 +290,9 @@ class _GoalSparkline extends StatelessWidget {
       }
     }
 
-    final maxY = [
-      ...projections.map((p) => p.corpus / 100000),
-      targetVal,
-    ].reduce((a, b) => a > b ? a : b) * 1.1;
+    final maxCorpus = corpusSpots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
+    final maxTarget = targetSpots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
+    final maxY = math.max(maxCorpus, maxTarget) * 1.1;
 
     return Container(
       height: 60,
@@ -305,19 +311,20 @@ class _GoalSparkline extends StatelessWidget {
             rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
             bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
-          extraLinesData: ExtraLinesData(
-            horizontalLines: [
-              HorizontalLine(
-                y: targetVal,
-                color: colors.success.withValues(alpha: 0.5),
-                strokeWidth: 1,
-                dashArray: [4, 4],
-              ),
-            ],
-          ),
           lineBarsData: [
+            // Target Curve
             LineChartBarData(
-              spots: spots,
+              spots: targetSpots,
+              isCurved: true,
+              curveSmoothness: 0.3,
+              color: colors.success.withValues(alpha: 0.5),
+              barWidth: 1.5,
+              dashArray: [4, 4],
+              dotData: const FlDotData(show: false),
+            ),
+            // Corpus Curve
+            LineChartBarData(
+              spots: corpusSpots,
               isCurved: true,
               curveSmoothness: 0.3,
               color: primaryColor,

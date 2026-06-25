@@ -27,6 +27,7 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
   late final TextEditingController _noteCtrl;
 
   String _category = 'Tech';
+  int? _targetMonth;
   bool _isOneTime = false;
 
   @override
@@ -42,6 +43,7 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
         text: p?.recurEveryNYears?.toString() ?? '3');
     _noteCtrl = TextEditingController(text: p?.note ?? '');
     _category = p?.category ?? 'Tech';
+    _targetMonth = p?.targetMonth;
     _isOneTime = p?.recurEveryNYears == null;
   }
 
@@ -66,6 +68,7 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
       firstYear: firstYear,
       recurEveryNYears: recur,
       category: _category,
+      targetMonth: _targetMonth,
     );
     return finance.totalSpendOverYears(p, 10);
   }
@@ -80,6 +83,7 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
       firstYear: firstYear,
       recurEveryNYears: recur,
       category: _category,
+      targetMonth: _targetMonth,
     );
     int count = 0;
     for (int y = 1; y <= 10; y++) {
@@ -104,6 +108,7 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
       recurEveryNYears: _isOneTime ? null : int.tryParse(_recurCtrl.text),
       category: _category,
       note: _noteCtrl.text.isNotEmpty ? _noteCtrl.text : null,
+      targetMonth: _targetMonth,
     );
 
     if (widget.existing != null) {
@@ -189,21 +194,49 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
                 },
               ),
               const SizedBox(height: 12),
-              TextFormField(
-                controller: _firstYearCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Starting Year',
-                  suffixText: 'year from now',
-                ),
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Enter starting year';
-                  final val = int.tryParse(v);
-                  if (val == null || val < 1 || val > 30) {
-                    return 'Enter a year between 1 and 30';
-                  }
-                  return null;
-                },
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _firstYearCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Starting Year',
+                        suffixText: 'year from now',
+                      ),
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return 'Enter starting year';
+                        final val = int.tryParse(v);
+                        if (val == null || val < 1 || val > 30) {
+                          return 'Enter a year between 1 and 30';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: DropdownButtonFormField<int?>(
+                      initialValue: _targetMonth,
+                      decoration: const InputDecoration(labelText: 'Month (Opt)'),
+                      items: [
+                        const DropdownMenuItem(value: null, child: Text('Any Month')),
+                        ...List.generate(12, (i) {
+                          final months = [
+                            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+                          ];
+                          return DropdownMenuItem(
+                            value: i,
+                            child: Text(months[i]),
+                          );
+                        }),
+                      ],
+                      onChanged: (v) => setState(() => _targetMonth = v),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               Row(

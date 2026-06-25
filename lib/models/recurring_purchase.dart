@@ -25,6 +25,9 @@ class RecurringPurchase extends HiveObject {
   @HiveField(6)
   String? note;
 
+  @HiveField(7)
+  int? targetMonth; // 0-11 (Jan-Dec)
+
   RecurringPurchase({
     required this.id,
     required this.name,
@@ -33,6 +36,7 @@ class RecurringPurchase extends HiveObject {
     this.recurEveryNYears,
     required this.category,
     this.note,
+    this.targetMonth,
   });
 
   RecurringPurchase copyWith({
@@ -43,6 +47,7 @@ class RecurringPurchase extends HiveObject {
     int? recurEveryNYears,
     String? category,
     String? note,
+    int? targetMonth,
   }) {
     return RecurringPurchase(
       id: id ?? this.id,
@@ -52,6 +57,7 @@ class RecurringPurchase extends HiveObject {
       recurEveryNYears: recurEveryNYears ?? this.recurEveryNYears,
       category: category ?? this.category,
       note: note ?? this.note,
+      targetMonth: targetMonth ?? this.targetMonth,
     );
   }
 
