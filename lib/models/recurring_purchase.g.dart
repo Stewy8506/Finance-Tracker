@@ -25,13 +25,15 @@ class RecurringPurchaseAdapter extends TypeAdapter<RecurringPurchase> {
       category: fields[5] as String,
       note: fields[6] as String?,
       targetMonth: fields[7] as int?,
+      emiMonths: fields[8] as int?,
+      emiInterestRate: fields[9] as double?,
     );
   }
 
   @override
   void write(BinaryWriter writer, RecurringPurchase obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -47,7 +49,11 @@ class RecurringPurchaseAdapter extends TypeAdapter<RecurringPurchase> {
       ..writeByte(6)
       ..write(obj.note)
       ..writeByte(7)
-      ..write(obj.targetMonth);
+      ..write(obj.targetMonth)
+      ..writeByte(8)
+      ..write(obj.emiMonths)
+      ..writeByte(9)
+      ..write(obj.emiInterestRate);
   }
 
   @override

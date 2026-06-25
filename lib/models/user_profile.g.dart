@@ -33,13 +33,14 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
       otherAssets: fields[13] as double?,
       liabilities: fields[14] as double?,
       navbarStyle: fields[15] as String?,
+      showOpportunityCost: fields[16] as bool?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserProfile obj) {
     writer
-      ..writeByte(16)
+      ..writeByte(17)
       ..writeByte(0)
       ..write(obj.startingCtcLpa)
       ..writeByte(1)
@@ -71,7 +72,9 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
       ..writeByte(14)
       ..write(obj.liabilities)
       ..writeByte(15)
-      ..write(obj.navbarStyle);
+      ..write(obj.navbarStyle)
+      ..writeByte(16)
+      ..write(obj.showOpportunityCost);
   }
 
   @override

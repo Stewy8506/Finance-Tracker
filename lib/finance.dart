@@ -10,6 +10,7 @@ import 'models/recurring_purchase.dart';
 import 'models/assumptions.dart';
 import 'models/income_source.dart';
 import 'models/year_projection.dart';
+import 'models/sip_restore.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TAX CALCULATION
@@ -165,16 +166,54 @@ double annualPurchaseSpend(List<RecurringPurchase> purchases, int year) {
   double total = 0;
   for (final p in purchases) {
     if (year < p.firstYear) continue;
-    if (p.recurEveryNYears == null) {
-      if (year == p.firstYear) total += p.amount;
+
+    final startYear = p.firstYear;
+    
+    if (p.emiMonths != null && p.emiMonths! > 0) {
+      final emiMonths = p.emiMonths!;
+      final r = (p.emiInterestRate ?? 0) / 12;
+      final emiAmount = _calculateEmi(p.amount, r, emiMonths);
+      
+      final startMonth = p.targetMonth ?? 0;
+      
+      if (p.recurEveryNYears == null) {
+        total += _monthsInYearForEmi(year, startYear, startMonth, emiMonths) * emiAmount;
+      } else {
+        for (int instanceYear = startYear; instanceYear <= year; instanceYear += p.recurEveryNYears!) {
+          total += _monthsInYearForEmi(year, instanceYear, startMonth, emiMonths) * emiAmount;
+        }
+      }
     } else {
-      final elapsed = year - p.firstYear;
-      if (elapsed >= 0 && elapsed % p.recurEveryNYears! == 0) {
-        total += p.amount;
+      if (p.recurEveryNYears == null) {
+        if (year == p.firstYear) total += p.amount;
+      } else {
+        final elapsed = year - p.firstYear;
+        if (elapsed >= 0 && elapsed % p.recurEveryNYears! == 0) {
+          total += p.amount;
+        }
       }
     }
   }
   return total;
+}
+
+double _calculateEmi(double principal, double monthlyRate, int months) {
+  if (monthlyRate == 0) return principal / months;
+  final factor = math.pow(1 + monthlyRate, months);
+  return principal * monthlyRate * factor / (factor - 1);
+}
+
+int _monthsInYearForEmi(int currentYear, int emiStartYear, int startMonth, int totalEmiMonths) {
+  if (currentYear < emiStartYear) return 0;
+  final yearStartMonthIndex = (currentYear - emiStartYear) * 12;
+  final emiEndMonthIndex = startMonth + totalEmiMonths - 1;
+  final overlapStart = math.max(yearStartMonthIndex, startMonth);
+  final overlapEnd = math.min(yearStartMonthIndex + 11, emiEndMonthIndex);
+  
+  if (overlapStart <= overlapEnd) {
+    return (overlapEnd - overlapStart + 1).toInt();
+  }
+  return 0;
 }
 
 /// Total spend across [horizonYears] for a single purchase (for UI preview).
@@ -215,6 +254,7 @@ List<YearProjection> generateProjection(
   Assumptions assumptions, {
   List<IncomeSource> incomeSources = const [],
   int maxYears = 30,
+  List<SipRestore> sipRestores = const [],
 }) {
   final projections = <YearProjection>[];
   final fundedGoals = <String>{};
@@ -254,7 +294,14 @@ List<YearProjection> generateProjection(
     final extraIncome = additionalMonthlyIncome(incomeSources, y);
     final totalIncome = salaryTakeHome + extraIncome;
 
-    final sipMonthly = totalIncome * profile.sipRatePct;
+    double effectiveSipRate = profile.sipRatePct;
+    for (final restore in sipRestores) {
+      if (y >= restore.restoreYear) {
+        effectiveSipRate = math.max(effectiveSipRate, restore.originalSipPct);
+      }
+    }
+
+    final sipMonthly = totalIncome * effectiveSipRate;
     final expenses = getMonthlyExpenses(profile, rateIndex, assumptions.expenseInflation);
     final freeCash = totalIncome - expenses - sipMonthly;
     final discSpend = annualPurchaseSpend(purchases, y);
@@ -268,8 +315,12 @@ List<YearProjection> generateProjection(
     sipCorpus += sipThisYear;
 
     final annualFreeCash = (freeCash * 12) - discSpend;
+    double cashFlowDeficit = 0;
+    
     if (annualFreeCash > 0) {
       cashCorpus += annualFreeCash;
+    } else if (annualFreeCash < 0) {
+      cashFlowDeficit = -annualFreeCash;
     }
 
     // 3. Fund goals
@@ -319,6 +370,7 @@ List<YearProjection> generateProjection(
       freeCashMonthly: freeCash,
       additionalIncome: extraIncome,
       totalIncome: totalIncome,
+      cashFlowDeficit: cashFlowDeficit,
     ));
   }
 

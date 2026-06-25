@@ -6,6 +6,7 @@ import '../../../finance.dart' as finance;
 import '../../../models/recurring_purchase.dart';
 import '../../../providers/purchases_provider.dart';
 import '../../../utils/currency_formatter.dart';
+import '../../../suggestion_engine.dart' as engine;
 
 class PurchaseForm extends ConsumerStatefulWidget {
   final RecurringPurchase? existing;
@@ -20,6 +21,76 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
   final _formKey = GlobalKey<FormState>();
   final _uuid = const Uuid();
 
+  String? _getBestMonthTip() {
+    final amount = double.tryParse(_amountCtrl.text) ?? 0.0;
+    if (amount <= 0) return null;
+
+    final firstYear = int.tryParse(_firstYearCtrl.text) ?? 1;
+    final recur = _isOneTime ? null : int.tryParse(_recurCtrl.text);
+    
+    final currentMonth = _targetMonth ?? 0;
+    final pCurrent = RecurringPurchase(
+      id: widget.existing?.id ?? '',
+      name: _nameCtrl.text,
+      amount: amount,
+      firstYear: firstYear,
+      recurEveryNYears: recur,
+      category: _category,
+      targetMonth: currentMonth,
+      emiMonths: _financeEmi ? _emiMonths.toInt() : null,
+      emiInterestRate: _financeEmi ? (double.tryParse(_emiInterestCtrl.text) ?? 0) / 100 : null,
+    );
+
+    final allPurchases = ref.read(purchasesProvider);
+    final otherPurchases = allPurchases.where((p) => p.id != (widget.existing?.id ?? '')).toList();
+
+    final bestMonth = engine.bestMonthForPurchase(pCurrent, otherPurchases);
+    if (bestMonth == currentMonth) return null;
+
+    // Calculate peaks to see improvement
+    double peakSpendCurrent = 0.0;
+    {
+      final tempPurchases = [...otherPurchases, pCurrent];
+      final breakdown = engine.monthlySpendBreakdown(tempPurchases, firstYear);
+      for (final s in breakdown) {
+        if (s > peakSpendCurrent) peakSpendCurrent = s;
+      }
+    }
+
+    double peakSpendBest = 0.0;
+    {
+      final pBest = RecurringPurchase(
+        id: pCurrent.id,
+        name: pCurrent.name,
+        amount: pCurrent.amount,
+        firstYear: pCurrent.firstYear,
+        recurEveryNYears: pCurrent.recurEveryNYears,
+        category: pCurrent.category,
+        targetMonth: bestMonth,
+        emiMonths: pCurrent.emiMonths,
+        emiInterestRate: pCurrent.emiInterestRate,
+      );
+      final tempPurchases = [...otherPurchases, pBest];
+      final breakdown = engine.monthlySpendBreakdown(tempPurchases, firstYear);
+      for (final s in breakdown) {
+        if (s > peakSpendBest) peakSpendBest = s;
+      }
+    }
+
+    final diff = peakSpendCurrent - peakSpendBest;
+    if (diff > 0) {
+      final months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      final currentMonthName = _targetMonth == null ? 'Any Month' : months[currentMonth];
+      final bestMonthName = months[bestMonth];
+      return '💡 Tip: Buying this in $bestMonthName instead of $currentMonthName would be ${formatCurrency(diff)}/mo easier on your cash flow.';
+    }
+
+    return null;
+  }
+
   late final TextEditingController _nameCtrl;
   late final TextEditingController _amountCtrl;
   late final TextEditingController _firstYearCtrl;
@@ -29,6 +100,10 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
   String _category = 'Tech';
   int? _targetMonth;
   bool _isOneTime = false;
+  
+  bool _financeEmi = false;
+  double _emiMonths = 12;
+  final _emiInterestCtrl = TextEditingController(text: '0.0');
 
   @override
   void initState() {
@@ -45,6 +120,12 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
     _category = p?.category ?? 'Tech';
     _targetMonth = p?.targetMonth;
     _isOneTime = p?.recurEveryNYears == null;
+    
+    _financeEmi = (p?.emiMonths ?? 0) > 0;
+    if (_financeEmi) {
+      _emiMonths = p!.emiMonths!.toDouble();
+      _emiInterestCtrl.text = ((p.emiInterestRate ?? 0) * 100).toStringAsFixed(1);
+    }
   }
 
   @override
@@ -54,6 +135,7 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
     _firstYearCtrl.dispose();
     _recurCtrl.dispose();
     _noteCtrl.dispose();
+    _emiInterestCtrl.dispose();
     super.dispose();
   }
 
@@ -69,6 +151,8 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
       recurEveryNYears: recur,
       category: _category,
       targetMonth: _targetMonth,
+      emiMonths: _financeEmi ? _emiMonths.toInt() : null,
+      emiInterestRate: _financeEmi ? (double.tryParse(_emiInterestCtrl.text) ?? 0) / 100 : null,
     );
     return finance.totalSpendOverYears(p, 10);
   }
@@ -84,6 +168,8 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
       recurEveryNYears: recur,
       category: _category,
       targetMonth: _targetMonth,
+      emiMonths: _financeEmi ? _emiMonths.toInt() : null,
+      emiInterestRate: _financeEmi ? (double.tryParse(_emiInterestCtrl.text) ?? 0) / 100 : null,
     );
     int count = 0;
     for (int y = 1; y <= 10; y++) {
@@ -109,6 +195,8 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
       category: _category,
       note: _noteCtrl.text.isNotEmpty ? _noteCtrl.text : null,
       targetMonth: _targetMonth,
+      emiMonths: _financeEmi ? _emiMonths.toInt() : null,
+      emiInterestRate: _financeEmi ? (double.tryParse(_emiInterestCtrl.text) ?? 0) / 100 : null,
     );
 
     if (widget.existing != null) {
@@ -238,6 +326,17 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
                   ),
                 ],
               ),
+              if (_getBestMonthTip() != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _getBestMonthTip()!,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -267,6 +366,62 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
                     return null;
                   },
                 ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Switch(
+                          value: _financeEmi,
+                          onChanged: (v) => setState(() => _financeEmi = v),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text('Finance via EMI'),
+                      ],
+                    ),
+                    if (_financeEmi) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Duration:'),
+                          Text('${_emiMonths.toInt()} months', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      Slider(
+                        value: _emiMonths,
+                        min: 3,
+                        max: 36,
+                        divisions: 33,
+                        onChanged: (v) => setState(() => _emiMonths = v),
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _emiInterestCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: 'Interest Rate (% p.a.)',
+                          suffixText: '%',
+                        ),
+                        validator: (v) {
+                          if (!_financeEmi) return null;
+                          if (v == null || v.isEmpty) return 'Enter interest rate';
+                          if (double.tryParse(v) == null) return 'Invalid number';
+                          return null;
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
               const SizedBox(height: 12),
               // Category
               Text('Category', style: theme.textTheme.bodySmall),

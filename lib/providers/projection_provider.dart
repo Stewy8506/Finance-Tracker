@@ -7,6 +7,7 @@ import 'goals_provider.dart';
 import 'purchases_provider.dart';
 import 'assumptions_provider.dart';
 import 'income_provider.dart';
+import 'sip_restore_provider.dart';
 
 /// A boolean provider that indicates if calculation is currently debouncing.
 final projectionRecalculatingProvider = StateProvider<bool>((ref) => false);
@@ -28,6 +29,7 @@ class ProjectionNotifier extends StateNotifier<List<YearProjection>> {
     _ref.listen(purchasesProvider, (prev, next) => _triggerDebouncedUpdate());
     _ref.listen(assumptionsProvider, (prev, next) => _triggerDebouncedUpdate());
     _ref.listen(incomeSourcesProvider, (prev, next) => _triggerDebouncedUpdate());
+    _ref.listen(sipRestoreProvider, (prev, next) => _triggerDebouncedUpdate());
 
     // Initial sync compute
     _updateNow();
@@ -48,6 +50,7 @@ class ProjectionNotifier extends StateNotifier<List<YearProjection>> {
     final purchases = _ref.read(purchasesProvider);
     final assumptions = _ref.read(assumptionsProvider);
     final incomeSources = _ref.read(incomeSourcesProvider);
+    final sipRestores = _ref.read(sipRestoreProvider);
 
     if (profile == null) {
       state = [];
@@ -58,6 +61,7 @@ class ProjectionNotifier extends StateNotifier<List<YearProjection>> {
         purchases,
         assumptions,
         incomeSources: incomeSources,
+        sipRestores: sipRestores,
       );
     }
   }

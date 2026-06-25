@@ -8,6 +8,8 @@ import 'models/assumptions.dart';
 import 'models/income_source.dart';
 import 'models/account.dart';
 import 'models/transaction.dart';
+import 'models/sip_restore.dart';
+import 'models/suggestion_history.dart';
 import 'theme.dart';
 import 'router.dart';
 import 'finance.dart';
@@ -28,6 +30,8 @@ Future<void> main() async {
   Hive.registerAdapter(IncomeSourceAdapter());
   Hive.registerAdapter(AccountAdapter());
   Hive.registerAdapter(TransactionAdapter());
+  Hive.registerAdapter(SipRestoreAdapter());
+  Hive.registerAdapter(SuggestionHistoryEntryAdapter());
 
   // Open Hive boxes
   await Hive.openBox<UserProfile>('user_profile');
@@ -37,6 +41,8 @@ Future<void> main() async {
   await Hive.openBox<IncomeSource>('income_sources');
   await Hive.openBox<Account>('accounts');
   await Hive.openBox<Transaction>('transactions');
+  await Hive.openBox<SipRestore>('sip_restore');
+  await Hive.openBox<SuggestionHistoryEntry>('suggestion_history');
 
   // Run database migrations
   await runMigrations();

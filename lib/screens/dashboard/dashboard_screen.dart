@@ -16,8 +16,12 @@ import '../../providers/purchases_provider.dart';
 import '../../providers/goals_provider.dart';
 import '../../providers/assumptions_provider.dart';
 import '../../providers/income_provider.dart';
+import '../../providers/suggestions_provider.dart';
+import '../../providers/suggestion_history_provider.dart';
+import '../../models/suggestion_history.dart';
 import '../../theme.dart';
 import '../../utils/currency_formatter.dart';
+import 'dart:math' as math;
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -40,6 +44,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final goals = ref.watch(goalsProvider);
     final assumptions = ref.watch(assumptionsProvider);
     final incomeSources = ref.watch(incomeSourcesProvider);
+    final suggestions = ref.watch(suggestionsProvider);
+    final history = ref.watch(suggestionHistoryProvider);
 
     if (profile == null || projections.isEmpty) {
       return const Scaffold(
@@ -59,6 +65,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final takeHome = year1.totalIncome > 0 ? year1.totalIncome : year1.takeHomeMonthly;
     final hasExtraIncome = year1.additionalIncome > 0;
     final emergencyMonths = finance.emergencyFundMonths(profile);
+    
+    final deficitYears = projections.where((p) => p.cashFlowDeficit > 0).toList();
 
     return Scaffold(
       body: CustomScrollView(
@@ -109,6 +117,66 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
+                if (deficitYears.isNotEmpty)
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      context.push('/purchases');
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: colors.high.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: colors.high),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded, color: colors.high),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Warning: You have a cash flow deficit of ${formatCurrency(deficitYears.first.cashFlowDeficit)} in Year ${deficitYears.first.year}. You have ${suggestions.length} smart suggestions to resolve it → View',
+                              style: TextStyle(color: colors.high, fontWeight: FontWeight.w600, fontSize: 13),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(Icons.arrow_forward_ios, size: 14, color: colors.high),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (deficitYears.isEmpty && suggestions.isNotEmpty)
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      context.push('/purchases');
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: theme.colorScheme.primary),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.lightbulb_outline, color: theme.colorScheme.primary),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              '💡 ${suggestions.length} ways to optimize your cash flow → View',
+                              style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600, fontSize: 13),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(Icons.arrow_forward_ios, size: 14, color: theme.colorScheme.primary),
+                        ],
+                      ),
+                    ),
+                  ),
                 // ── Net Worth summary card ───────────────────────────────
                 _NetWorthCard(
                   netWorth: (projections.first.corpus) +
@@ -183,6 +251,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
                 const SizedBox(height: 16),
 
+                // ── Advisor History Card ────────────────────────────────
+                _AdvisorHistoryCard(
+                  history: history,
+                  sipReturnRate: assumptions.sipReturnRate,
+                  colors: colors,
+                ),
+                const SizedBox(height: 16),
+
                 // ── 4 stat cards ──────────────────────────────────────────
                 GridView.count(
                   crossAxisCount: 2,
@@ -205,10 +281,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       color: colors.success,
                     ),
                     _StatCard(
-                      label: 'Free Cash / Month',
-                      numericValue: freeCash > 0 ? freeCash : 0,
-                      icon: Icons.savings_outlined,
-                      color: colors.warning,
+                      label: freeCash < 0 ? 'Deficit / Month' : 'Free Cash / Month',
+                      numericValue: freeCash < 0 ? -freeCash : freeCash,
+                      icon: freeCash < 0 ? Icons.warning_amber_rounded : Icons.savings_outlined,
+                      color: freeCash < 0 ? colors.high : colors.warning,
                     ),
                     _StatCard(
                       label: 'Corpus at Year 5',
@@ -279,7 +355,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     expenses: expenses,
                     sip: sip,
                     purchases: techSpendMonthly,
-                    freeCash: freeCash > 0 ? freeCash : 0,
+                    freeCash: freeCash,
                   ),
                 const SizedBox(height: 24),
 
@@ -1465,7 +1541,10 @@ class _CashFlowWaterfall extends StatelessWidget {
       _WaterfallItem('Expenses', expenses, colors.high),
       _WaterfallItem('SIP', sip, theme.colorScheme.primary),
       _WaterfallItem('Purchases', purchases, colors.warning),
-      _WaterfallItem('Free Cash', freeCash > 0 ? freeCash : 0.0, colors.success),
+      if (freeCash >= 0)
+        _WaterfallItem('Free Cash', freeCash, colors.success)
+      else
+        _WaterfallItem('Deficit', -freeCash, colors.high),
     ];
 
     return Container(
@@ -1579,6 +1658,153 @@ class _QuickActionButton extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _AdvisorHistoryCard extends StatelessWidget {
+  final List<SuggestionHistoryEntry> history;
+  final double sipReturnRate;
+  final LedgerColors colors;
+
+  const _AdvisorHistoryCard({
+    required this.history,
+    required this.sipReturnRate,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final count = history.length;
+
+    final now = DateTime.now();
+    final thisMonthCount = history.where((e) => now.difference(e.appliedAt).inDays <= 30).length;
+
+    double totalFreed = 0.0;
+    double totalCorpusImprovement = 0.0;
+    for (final entry in history) {
+      totalFreed += entry.cashFlowImpact;
+      totalCorpusImprovement += entry.cashFlowImpact * math.pow(1 + sipReturnRate, 10);
+    }
+
+    String formatCurrency(double amount) {
+      if (amount >= 100000) {
+        return '₹${(amount / 100000).toStringAsFixed(1)}L';
+      } else if (amount >= 1000) {
+        return '₹${(amount / 1000).toStringAsFixed(0)}K';
+      } else {
+        return '₹${amount.toStringAsFixed(0)}';
+      }
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111215),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF1F2128), width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.auto_awesome_outlined, color: theme.colorScheme.primary, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Advisor Insights & History',
+                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          if (count == 0) ...[
+            Text(
+              'No suggestions applied yet.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Use the Smart Financial Advisor in the Spend Planner to optimize your timing, convert to EMIs, or stagger payments to free up cash flow.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+            ),
+          ] else ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildStatItem(
+                  theme: theme,
+                  icon: Icons.check_circle_outline,
+                  iconColor: colors.success,
+                  value: '$thisMonthCount applied',
+                  label: 'This Month',
+                ),
+                _buildStatItem(
+                  theme: theme,
+                  icon: Icons.monetization_on_outlined,
+                  iconColor: theme.colorScheme.primary,
+                  value: formatCurrency(totalFreed),
+                  label: 'Cash Flow Freed',
+                ),
+                _buildStatItem(
+                  theme: theme,
+                  icon: Icons.trending_up,
+                  iconColor: colors.success,
+                  value: '+${formatCurrency(totalCorpusImprovement)}',
+                  label: '10-Yr Corpus Est.',
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem({
+    required ThemeData theme,
+    required IconData icon,
+    required Color iconColor,
+    required String value,
+    required String label,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: iconColor, size: 14),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -18,6 +18,9 @@ class YearProjection {
   /// Total monthly income (salary take-home + additional).
   final double totalIncome;
 
+  /// The shortfall amount if purchases/EMI exceed free cash.
+  final double cashFlowDeficit;
+
   const YearProjection({
     required this.year,
     required this.ctcLpa,
@@ -31,5 +34,6 @@ class YearProjection {
     required this.freeCashMonthly,
     this.additionalIncome = 0,
     this.totalIncome = 0,
+    this.cashFlowDeficit = 0,
   });
 }

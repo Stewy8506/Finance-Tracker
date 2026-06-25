@@ -4,9 +4,12 @@ import '../../finance.dart' as finance;
 import '../../models/recurring_purchase.dart';
 import '../../providers/purchases_provider.dart';
 import '../../utils/currency_formatter.dart';
+import '../../providers/projection_provider.dart';
+import '../../theme.dart';
 import 'widgets/empty_purchases.dart';
 import 'widgets/purchase_card.dart';
 import 'widgets/purchase_form.dart';
+import 'widgets/suggestions_panel.dart';
 
 class PurchasesScreen extends ConsumerWidget {
   const PurchasesScreen({super.key});
@@ -21,6 +24,10 @@ class PurchasesScreen extends ConsumerWidget {
     for (final p in purchases) {
       grouped.putIfAbsent(p.category, () => []).add(p);
     }
+    
+    final projections = ref.watch(projectionProvider);
+    final deficitYears = projections.where((p) => p.cashFlowDeficit > 0).toList();
+    final ledgerColors = theme.extension<LedgerColors>()!;
 
     // 10-year tech spend summary
     final techPurchases = purchases.where((p) => p.category == 'Tech').toList();
@@ -40,6 +47,36 @@ class PurchasesScreen extends ConsumerWidget {
           ? EmptyPurchases(onAdd: () => _showPurchaseSheet(context, ref, null))
           : CustomScrollView(
               slivers: [
+                if (deficitYears.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: Container(
+                      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: ledgerColors.high.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: ledgerColors.high),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded, color: ledgerColors.high),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Warning: Your planned purchases create a cash flow deficit of ${formatCurrency(deficitYears.first.cashFlowDeficit)} in Year ${deficitYears.first.year}.',
+                              style: TextStyle(color: ledgerColors.high, fontWeight: FontWeight.w600, fontSize: 13),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: SuggestionsPanel(),
+                  ),
+                ),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),

@@ -28,6 +28,12 @@ class RecurringPurchase extends HiveObject {
   @HiveField(7)
   int? targetMonth; // 0-11 (Jan-Dec)
 
+  @HiveField(8)
+  int? emiMonths; // e.g. 12, 24, 36
+
+  @HiveField(9)
+  double? emiInterestRate; // e.g. 0.0, 0.12
+
   RecurringPurchase({
     required this.id,
     required this.name,
@@ -37,6 +43,8 @@ class RecurringPurchase extends HiveObject {
     required this.category,
     this.note,
     this.targetMonth,
+    this.emiMonths,
+    this.emiInterestRate,
   });
 
   RecurringPurchase copyWith({
@@ -48,6 +56,8 @@ class RecurringPurchase extends HiveObject {
     String? category,
     String? note,
     int? targetMonth,
+    int? emiMonths,
+    double? emiInterestRate,
   }) {
     return RecurringPurchase(
       id: id ?? this.id,
@@ -58,6 +68,8 @@ class RecurringPurchase extends HiveObject {
       category: category ?? this.category,
       note: note ?? this.note,
       targetMonth: targetMonth ?? this.targetMonth,
+      emiMonths: emiMonths ?? this.emiMonths,
+      emiInterestRate: emiInterestRate ?? this.emiInterestRate,
     );
   }
 

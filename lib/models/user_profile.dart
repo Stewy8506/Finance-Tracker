@@ -89,6 +89,10 @@ class UserProfile extends HiveObject {
   @HiveField(15)
   String? navbarStyle;
 
+  /// Settings toggle to show/hide opportunity cost cards
+  @HiveField(16)
+  bool? showOpportunityCost;
+
   UserProfile({
     required this.startingCtcLpa,
     required this.annualHikePct,
@@ -106,6 +110,7 @@ class UserProfile extends HiveObject {
     this.otherAssets,
     this.liabilities,
     this.navbarStyle,
+    this.showOpportunityCost = true,
   });
 
   // ── Hike bracket helpers ──────────────────────────────────────────────
@@ -158,6 +163,7 @@ class UserProfile extends HiveObject {
     double? otherAssets,
     double? liabilities,
     String? navbarStyle,
+    bool? showOpportunityCost,
   }) {
     return UserProfile(
       startingCtcLpa: startingCtcLpa ?? this.startingCtcLpa,
@@ -176,6 +182,7 @@ class UserProfile extends HiveObject {
       otherAssets: otherAssets ?? this.otherAssets,
       liabilities: liabilities ?? this.liabilities,
       navbarStyle: navbarStyle ?? this.navbarStyle,
+      showOpportunityCost: showOpportunityCost ?? this.showOpportunityCost,
     );
   }
 

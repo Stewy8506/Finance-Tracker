@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../finance.dart' as finance;
 import '../../../models/recurring_purchase.dart';
 import '../../../utils/currency_formatter.dart';
+import '../../../providers/projection_provider.dart';
+import '../../../suggestion_engine.dart' as engine;
+import '../../../theme.dart';
 
-class PurchaseCard extends StatelessWidget {
+class PurchaseCard extends ConsumerWidget {
   final RecurringPurchase purchase;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -26,12 +30,30 @@ class PurchaseCard extends StatelessWidget {
     return colors[purchase.category] ?? const Color(0xFF9CA3AF);
   }
 
+  Map<String, dynamic> _getAffordabilityConfig(double score, LedgerColors colors) {
+    if (score >= 80) {
+      return {'color': colors.success, 'label': 'Very Comfortable'};
+    } else if (score >= 50) {
+      return {'color': colors.warning, 'label': 'Manageable'};
+    } else if (score >= 20) {
+      return {'color': Colors.orange, 'label': 'Tight'};
+    } else {
+      return {'color': colors.high, 'label': 'Unaffordable'};
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final ledgerColors = theme.extension<LedgerColors>() ?? LedgerColors.dark;
     final color = _catColor();
     final total10 = finance.totalSpendOverYears(purchase, 10);
     final occurrences10 = _countOccurrences(10);
+
+    // Compute Affordability Score
+    final projections = ref.watch(projectionProvider);
+    final score = engine.purchaseAffordabilityScore(purchase, projections);
+    final scoreConfig = _getAffordabilityConfig(score, ledgerColors);
 
     return Dismissible(
       key: Key(purchase.id),
@@ -65,14 +87,36 @@ class PurchaseCard extends StatelessWidget {
                       style: theme.textTheme.titleMedium
                           ?.copyWith(fontWeight: FontWeight.w600)),
                 ),
-                Text(
-                  formatCurrency(purchase.amount),
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
+                if ((purchase.emiMonths ?? 0) > 0)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${formatCurrency(_calculateEmi(purchase.amount, (purchase.emiInterestRate ?? 0) / 12, purchase.emiMonths!))}/mo',
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Text(
+                        'for ${purchase.emiMonths} mos @ ${(purchase.emiInterestRate ?? 0) * 100}%',
+                        style: TextStyle(
+                          color: color.withValues(alpha: 0.7),
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  Text(
+                    formatCurrency(purchase.amount),
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
                   ),
-                ),
                 const SizedBox(width: 8),
                 GestureDetector(
                   onTap: onEdit,
@@ -100,8 +144,38 @@ class PurchaseCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '${purchase.recurrenceLabel}, starting year ${purchase.firstYear}',
+                  '${purchase.recurrenceLabel}, Yr ${purchase.firstYear}',
                   style: theme.textTheme.bodySmall,
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1F2128),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: scoreConfig['color'],
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        '${scoreConfig['label']} (${score.toStringAsFixed(0)})',
+                        style: TextStyle(
+                          color: scoreConfig['color'],
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -142,6 +216,15 @@ class PurchaseCard extends StatelessWidget {
       }
     }
     return count;
+  }
+
+  double _calculateEmi(double principal, double monthlyRate, int months) {
+    if (monthlyRate == 0) return principal / months;
+    double factor = 1.0;
+    for (int i = 0; i < months; i++) {
+      factor *= (1 + monthlyRate);
+    }
+    return principal * monthlyRate * factor / (factor - 1);
   }
 }
 

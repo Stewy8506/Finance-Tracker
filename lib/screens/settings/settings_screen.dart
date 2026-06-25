@@ -932,6 +932,39 @@ class _AppPreferencesEditor extends ConsumerWidget {
               ),
             ],
           ),
+          const Divider(color: Color(0xFF1F2128), height: 32),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Opportunity Cost Nudges',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Show 10-year potential growth details on purchase suggestions',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: profile.showOpportunityCost ?? true,
+                onChanged: (val) {
+                  HapticFeedback.lightImpact();
+                  ref.read(userProfileProvider.notifier).save(
+                        profile.copyWith(showOpportunityCost: val),
+                      );
+                },
+              ),
+            ],
+          ),
         ],
       ),
     );
