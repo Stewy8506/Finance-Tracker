@@ -109,7 +109,7 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
                   show: true,
                   drawVerticalLine: false,
                   getDrawingHorizontalLine: (v) => FlLine(
-                    color: theme.colorScheme.onSurface.withOpacity(0.05),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
                     strokeWidth: 1,
                   ),
                 ),
@@ -176,7 +176,7 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
                             : colors.success;
                     return HorizontalLine(
                       y: g.targetAmount / 100000,
-                      color: c.withOpacity(0.6),
+                      color: c.withValues(alpha: 0.6),
                       strokeWidth: 1.5,
                       dashArray: [6, 4],
                       label: HorizontalLineLabel(
@@ -199,7 +199,7 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
                             : colors.success;
                     return VerticalLine(
                       x: fundedYear.toDouble(),
-                      color: c.withOpacity(0.4),
+                      color: c.withValues(alpha: 0.4),
                       strokeWidth: 1,
                       dashArray: [4, 4],
                     );
@@ -218,7 +218,7 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
                       checkToShowDot: (spot, _) =>
                           spot.x.toInt() == _touchedIndex ||
                           spot.x.toInt() % 5 == 0,
-                      getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
+                      getDotPainter: (spot, _, _, _) => FlDotCirclePainter(
                         radius: 4,
                         color: theme.colorScheme.primary,
                         strokeWidth: 2,
@@ -231,8 +231,8 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          theme.colorScheme.primary.withOpacity(0.25),
-                          theme.colorScheme.primary.withOpacity(0),
+                          theme.colorScheme.primary.withValues(alpha: 0.25),
+                          theme.colorScheme.primary.withValues(alpha: 0),
                         ],
                       ),
                     ),
@@ -331,7 +331,7 @@ class _TableTab extends ConsumerWidget {
         child: DataTable(
           columnSpacing: 16,
           headingRowColor:
-              WidgetStateProperty.all(theme.colorScheme.primary.withOpacity(0.1)),
+              WidgetStateProperty.all(theme.colorScheme.primary.withValues(alpha: 0.1)),
           columns: const [
             DataColumn(label: Text('Yr')),
             DataColumn(label: Text('CTC')),
@@ -346,7 +346,7 @@ class _TableTab extends ConsumerWidget {
             return DataRow(
               color: hasGoal
                   ? WidgetStateProperty.all(
-                      colors.success.withOpacity(0.06))
+                      colors.success.withValues(alpha: 0.06))
                   : null,
               cells: [
                 DataCell(Container(
@@ -466,14 +466,14 @@ class _WhatIfTabState extends ConsumerState<_WhatIfTab> {
               gradient: LinearGradient(
                 colors: [
                   (delta >= 0 ? colors.success : colors.high)
-                      .withOpacity(0.12),
-                  theme.colorScheme.primary.withOpacity(0.06),
+                      .withValues(alpha: 0.12),
+                  theme.colorScheme.primary.withValues(alpha: 0.06),
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                   color: (delta >= 0 ? colors.success : colors.high)
-                      .withOpacity(0.3)),
+                      .withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -579,7 +579,7 @@ class _WhatIfTabState extends ConsumerState<_WhatIfTab> {
                         .map((p) =>
                             FlSpot(p.year.toDouble(), p.corpus / 100000))
                         .toList(),
-                    color: theme.colorScheme.primary.withOpacity(0.5),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.5),
                     barWidth: 2,
                     isCurved: true,
                     dotData: const FlDotData(show: false),
@@ -604,7 +604,7 @@ class _WhatIfTabState extends ConsumerState<_WhatIfTab> {
           Row(
             children: [
               _LegendItem2(
-                  color: theme.colorScheme.primary.withOpacity(0.5),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.5),
                   label: 'Current Plan'),
               const SizedBox(width: 16),
               _LegendItem2(color: colors.success, label: 'What-If'),
@@ -660,8 +660,8 @@ class _SliderRow extends StatelessWidget {
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: accentColor,
             thumbColor: accentColor,
-            overlayColor: accentColor.withOpacity(0.12),
-            inactiveTrackColor: accentColor.withOpacity(0.2),
+            overlayColor: accentColor.withValues(alpha: 0.12),
+            inactiveTrackColor: accentColor.withValues(alpha: 0.2),
           ),
           child: Slider(
             value: value,

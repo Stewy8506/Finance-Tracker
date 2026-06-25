@@ -26,7 +26,7 @@ class GoalsScreen extends ConsumerWidget {
             padding: const EdgeInsets.only(right: 8),
             child: Chip(
               label: Text('${goals.length} goals'),
-              backgroundColor: theme.colorScheme.primary.withOpacity(0.15),
+              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
               labelStyle: TextStyle(
                   color: theme.colorScheme.primary,
                   fontSize: 12,
@@ -45,7 +45,7 @@ class GoalsScreen extends ConsumerWidget {
           : ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
               itemCount: goals.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (context, i) => _GoalCard(
                 goal: goals[i],
                 onEdit: () => _showGoalSheet(context, ref, goals[i]),
@@ -155,7 +155,7 @@ class _GoalCard extends ConsumerWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
-          color: colors.high.withOpacity(0.15),
+          color: colors.high.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Icon(Icons.delete_outline, color: colors.high),
@@ -165,7 +165,7 @@ class _GoalCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: const Color(0xFF1E1E2E),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: priorityColor.withOpacity(0.2)),
+          border: Border.all(color: priorityColor.withValues(alpha: 0.2)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,7 +183,7 @@ class _GoalCard extends ConsumerWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: priorityColor.withOpacity(0.15),
+                    color: priorityColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -199,7 +199,7 @@ class _GoalCard extends ConsumerWidget {
                 GestureDetector(
                   onTap: onEdit,
                   child: Icon(Icons.edit_outlined,
-                      color: theme.colorScheme.primary.withOpacity(0.7),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.7),
                       size: 20),
                 ),
               ],
@@ -278,7 +278,7 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -417,7 +417,7 @@ class _GoalFormState extends ConsumerState<_GoalForm> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurface.withOpacity(0.2),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -512,7 +512,7 @@ class _GoalFormState extends ConsumerState<_GoalForm> {
                     child: ChoiceChip(
                       label: Text(p.toUpperCase()),
                       selected: _priority == p,
-                      selectedColor: colors[p]!.withOpacity(0.2),
+                      selectedColor: colors[p]!.withValues(alpha: 0.2),
                       onSelected: (_) => setState(() => _priority = p),
                       labelStyle: TextStyle(
                         color: _priority == p ? colors[p] : null,
@@ -563,13 +563,13 @@ class _EmptyGoals extends StatelessWidget {
         children: [
           Icon(Icons.flag_outlined,
               size: 64,
-              color: theme.colorScheme.primary.withOpacity(0.3)),
+              color: theme.colorScheme.primary.withValues(alpha: 0.3)),
           const SizedBox(height: 16),
           Text('No goals yet', style: theme.textTheme.headlineSmall),
           const SizedBox(height: 8),
           Text('Add your first financial goal to get started.',
               style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.6))),
+                  ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
           const SizedBox(height: 24),
           FilledButton.icon(
             onPressed: onAdd,

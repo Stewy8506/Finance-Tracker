@@ -110,11 +110,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       onboardingComplete: true,
     );
 
-    await ref.read(userProfileProvider.notifier).save(profile);
+    final userProfileNotifier = ref.read(userProfileProvider.notifier);
+    final purchasesNotifier = ref.read(purchasesProvider.notifier);
+    final goalsNotifier = ref.read(goalsProvider.notifier);
+
+    await userProfileNotifier.save(profile);
 
     // Pre-populate default purchases
     final defaults = _defaultPurchases();
-    await ref.read(purchasesProvider.notifier).addAll(defaults);
+    await purchasesNotifier.addAll(defaults);
 
     // Add first goal if not skipped
     if (!_skipGoal) {
@@ -130,7 +134,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         propertyValue: amount,
         downPaymentPct: 0.20,
       );
-      await ref.read(goalsProvider.notifier).add(goal);
+      await goalsNotifier.add(goal);
     }
 
     if (mounted) context.go('/dashboard');
@@ -239,7 +243,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           decoration: BoxDecoration(
                             color: isActive
                                 ? theme.colorScheme.primary
-                                : theme.colorScheme.primary.withOpacity(0.2),
+                                : theme.colorScheme.primary.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -358,7 +362,7 @@ class _Step1CTC extends StatelessWidget {
           const SizedBox(height: 8),
           Text('Your annual cost-to-company in lakhs per annum.',
               style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.6))),
+                  ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
           const SizedBox(height: 32),
           TextFormField(
             controller: controller,
@@ -381,13 +385,13 @@ class _Step1CTC extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  theme.colorScheme.primary.withOpacity(0.15),
-                  theme.colorScheme.secondary.withOpacity(0.1),
+                  theme.colorScheme.primary.withValues(alpha: 0.15),
+                  theme.colorScheme.secondary.withValues(alpha: 0.1),
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                  color: theme.colorScheme.primary.withOpacity(0.3)),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -449,7 +453,7 @@ class _Step2Hike extends StatelessWidget {
           const SizedBox(height: 8),
           Text('This compounds your salary year-over-year.',
               style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.6))),
+                  ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
           const SizedBox(height: 40),
           Center(
             child: Text(
@@ -478,10 +482,10 @@ class _Step2Hike extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: _hikeLabelColor(context).withOpacity(0.1),
+              color: _hikeLabelColor(context).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border:
-                  Border.all(color: _hikeLabelColor(context).withOpacity(0.3)),
+                  Border.all(color: _hikeLabelColor(context).withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -538,10 +542,10 @@ class _Step3City extends StatelessWidget {
           const SizedBox(height: 8),
           Text('This sets your baseline monthly expenses.',
               style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.6))),
+                  ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
           const SizedBox(height: 32),
           DropdownButtonFormField<String>(
-            value: preset,
+            initialValue: preset,
             decoration: const InputDecoration(labelText: 'City / Living Situation'),
             dropdownColor: const Color(0xFF1E1E2E),
             items: const [
@@ -620,7 +624,7 @@ class _Step4SIP extends StatelessWidget {
           const SizedBox(height: 8),
           Text('% of monthly take-home invested in mutual funds.',
               style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.6))),
+                  ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
           const SizedBox(height: 40),
           Center(
             child: Column(
@@ -633,7 +637,7 @@ class _Step4SIP extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  formatCurrency(sipMonthly) + '/month',
+                  '${formatCurrency(sipMonthly)}/month',
                   style: theme.textTheme.titleLarge?.copyWith(
                     color: theme.colorScheme.secondary,
                   ),
@@ -692,9 +696,9 @@ class _CorpusCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -744,7 +748,7 @@ class _Step5Goal extends StatelessWidget {
           const SizedBox(height: 8),
           Text('We\'ll track your path to making this happen.',
               style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.6))),
+                  ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
           const SizedBox(height: 24),
           Row(
             children: [

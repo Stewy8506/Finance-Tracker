@@ -1,6 +1,6 @@
 /// Pure finance calculation functions — no Flutter dependencies.
 /// All monetary values in Indian Rupees (₹).
-library finance;
+library;
 
 import 'dart:math' as math;
 
@@ -279,7 +279,7 @@ void verifyFinanceEngine() {
 
   // SIP: ₹10K/mo at 12% for 10yr ≈ ₹23.2L
   final sipFv = sipFutureValue(10000, 120, 0.12);
-  assert(sipFv > 23000000 && sipFv < 24000000,
+  assert(sipFv > 2300000 && sipFv < 2400000,
       'Expected ~₹23.2L SIP FV, got $sipFv');
 
   // EMI: ₹1Cr at 8.5% for 20yr ≈ ₹86,849

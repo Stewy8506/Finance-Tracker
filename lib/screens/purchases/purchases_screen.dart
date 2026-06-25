@@ -46,13 +46,13 @@ class PurchasesScreen extends ConsumerWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            const Color(0xFF6366F1).withOpacity(0.12),
-                            const Color(0xFF818CF8).withOpacity(0.06),
+                            const Color(0xFF6366F1).withValues(alpha: 0.12),
+                            const Color(0xFF818CF8).withValues(alpha: 0.06),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                            color: const Color(0xFF6366F1).withOpacity(0.2)),
+                            color: const Color(0xFF6366F1).withValues(alpha: 0.2)),
                       ),
                       child: Row(
                         children: [
@@ -105,7 +105,7 @@ class PurchasesScreen extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: _categoryColor(entry.key).withOpacity(0.15),
+                              color: _categoryColor(entry.key).withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
@@ -224,7 +224,7 @@ class _PurchaseCard extends StatelessWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
-          color: const Color(0xFFF87171).withOpacity(0.15),
+          color: const Color(0xFFF87171).withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(14),
         ),
         child: const Icon(Icons.delete_outline, color: Color(0xFFF87171)),
@@ -234,7 +234,7 @@ class _PurchaseCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFF1E1E2E),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.15)),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -258,7 +258,7 @@ class _PurchaseCard extends StatelessWidget {
                 GestureDetector(
                   onTap: onEdit,
                   child: Icon(Icons.edit_outlined,
-                      color: theme.colorScheme.primary.withOpacity(0.6),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.6),
                       size: 18),
                 ),
               ],
@@ -270,7 +270,7 @@ class _PurchaseCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
+                    color: color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -291,7 +291,7 @@ class _PurchaseCard extends StatelessWidget {
               children: [
                 Icon(Icons.calendar_today,
                     size: 12,
-                    color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                 const SizedBox(width: 4),
                 Text(
                   'Next: Yr ${purchase.nextOccurrence(1)}',
@@ -301,7 +301,7 @@ class _PurchaseCard extends StatelessWidget {
                 Text(
                   '₹${(total10 / 100000).toStringAsFixed(1)}L over 10yr ($occurrences10×)',
                   style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                 ),
               ],
             ),
@@ -356,7 +356,7 @@ class _CategoryIcon extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Icon(icon, color: color, size: 16),
@@ -499,7 +499,7 @@ class _PurchaseFormState extends ConsumerState<_PurchaseForm> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurface.withOpacity(0.2),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -584,10 +584,10 @@ class _PurchaseFormState extends ConsumerState<_PurchaseForm> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.08),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: theme.colorScheme.primary.withOpacity(0.2)),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.2)),
                   ),
                   child: Row(
                     children: [
@@ -646,14 +646,14 @@ class _EmptyPurchases extends StatelessWidget {
         children: [
           Icon(Icons.shopping_bag_outlined,
               size: 64,
-              color: theme.colorScheme.primary.withOpacity(0.3)),
+              color: theme.colorScheme.primary.withValues(alpha: 0.3)),
           const SizedBox(height: 16),
           Text('No purchases planned', style: theme.textTheme.headlineSmall),
           const SizedBox(height: 8),
           Text(
             'Track recurring tech, travel, and lifestyle spends.',
             style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),

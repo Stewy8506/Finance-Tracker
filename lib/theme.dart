@@ -42,7 +42,7 @@ ThemeData buildDarkTheme() {
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: const Color(0xFF1A1A2E),
-      indicatorColor: _kAccent.withOpacity(0.2),
+      indicatorColor: _kAccent.withValues(alpha: 0.2),
       iconTheme: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
           return const IconThemeData(color: _kAccent, size: 24);
@@ -59,13 +59,13 @@ ThemeData buildDarkTheme() {
     ),
     sliderTheme: SliderThemeData(
       activeTrackColor: _kAccent,
-      inactiveTrackColor: _kAccent.withOpacity(0.2),
+      inactiveTrackColor: _kAccent.withValues(alpha: 0.2),
       thumbColor: _kAccent,
-      overlayColor: _kAccent.withOpacity(0.12),
+      overlayColor: _kAccent.withValues(alpha: 0.12),
     ),
     chipTheme: ChipThemeData(
       backgroundColor: const Color(0xFF2D2D42),
-      selectedColor: _kAccent.withOpacity(0.3),
+      selectedColor: _kAccent.withValues(alpha: 0.3),
       labelStyle: const TextStyle(fontSize: 12),
       side: BorderSide.none,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

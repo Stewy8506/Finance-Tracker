@@ -181,8 +181,8 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  theme.colorScheme.primary.withOpacity(0.12),
-                  theme.colorScheme.secondary.withOpacity(0.06),
+                  theme.colorScheme.primary.withValues(alpha: 0.12),
+                  theme.colorScheme.secondary.withValues(alpha: 0.06),
                 ],
               ),
               borderRadius: BorderRadius.circular(12),
@@ -248,7 +248,7 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: _cityPreset,
+            initialValue: _cityPreset,
             decoration: const InputDecoration(labelText: 'City Preset'),
             dropdownColor: const Color(0xFF1E1E2E),
             items: const [
@@ -432,7 +432,7 @@ class _TaxCard extends StatelessWidget {
         color: const Color(0xFF1E1E2E),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isBetter ? colors.success.withOpacity(0.4) : const Color(0xFF2D2D42),
+          color: isBetter ? colors.success.withValues(alpha: 0.4) : const Color(0xFF2D2D42),
           width: isBetter ? 2 : 1,
         ),
       ),
@@ -459,7 +459,7 @@ class _TaxCard extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: colors.success.withOpacity(0.15),
+                color: colors.success.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -662,7 +662,7 @@ class _DataSection extends ConsumerWidget {
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.15),
+                color: theme.colorScheme.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.download_outlined,
@@ -720,7 +720,7 @@ class _DataSection extends ConsumerWidget {
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: colors.high.withOpacity(0.15),
+                color: colors.high.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.delete_sweep_outlined,

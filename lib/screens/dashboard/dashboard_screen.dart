@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../finance.dart' as finance;
 import '../../models/year_projection.dart';
+import '../../models/goal.dart';
+import '../../models/assumptions.dart';
+import '../../models/user_profile.dart';
+import '../../models/recurring_purchase.dart';
 import '../../providers/user_profile_provider.dart';
 import '../../providers/projection_provider.dart';
 import '../../providers/purchases_provider.dart';
@@ -190,11 +194,11 @@ class _StatCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             const Color(0xFF1E1E2E),
-            color.withOpacity(0.08),
+            color.withValues(alpha: 0.08),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,7 +207,7 @@ class _StatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 18),
@@ -220,7 +224,7 @@ class _StatCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(label,
                   style: theme.textTheme.bodySmall
-                      ?.copyWith(color: color.withOpacity(0.8))),
+                      ?.copyWith(color: color.withValues(alpha: 0.8))),
             ],
           ),
         ],
@@ -287,7 +291,7 @@ class _BudgetPieChart extends StatelessWidget {
         color: const Color(0xFF1E1E2E),
         borderRadius: BorderRadius.circular(16),
         border:
-            Border.all(color: theme.colorScheme.primary.withOpacity(0.1)),
+            Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
@@ -465,7 +469,7 @@ class _SpendCalendarState extends State<_SpendCalendar> {
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? theme.colorScheme.primary.withOpacity(0.2)
+                    ? theme.colorScheme.primary.withValues(alpha: 0.2)
                     : const Color(0xFF1E1E2E),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
@@ -522,10 +526,10 @@ class _SpendCalendarState extends State<_SpendCalendar> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _MilestoneCard extends StatelessWidget {
   final List<YearProjection> projections;
-  final List goals;
-  final assumptions;
-  final profile;
-  final purchases;
+  final List<Goal> goals;
+  final Assumptions assumptions;
+  final UserProfile profile;
+  final List<RecurringPurchase> purchases;
 
   const _MilestoneCard({
     required this.projections,
@@ -551,7 +555,7 @@ class _MilestoneCard extends StatelessWidget {
         child: Row(
           children: [
             Icon(Icons.flag_outlined,
-                color: theme.colorScheme.primary.withOpacity(0.5)),
+                color: theme.colorScheme.primary.withValues(alpha: 0.5)),
             const SizedBox(width: 12),
             Text('Add a goal to see your next milestone.',
                 style: theme.textTheme.bodyMedium),
@@ -578,12 +582,12 @@ class _MilestoneCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            colors.high.withOpacity(0.08),
-            theme.colorScheme.primary.withOpacity(0.08),
+            colors.high.withValues(alpha: 0.08),
+            theme.colorScheme.primary.withValues(alpha: 0.08),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.high.withOpacity(0.2)),
+        border: Border.all(color: colors.high.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -606,7 +610,7 @@ class _MilestoneCard extends StatelessWidget {
                   color: (fundedYear > 0 && fundedYear <= goal.targetYear
                           ? colors.success
                           : colors.high)
-                      .withOpacity(0.15),
+                      .withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -642,7 +646,7 @@ class _MilestoneCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 8,
-              backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
               valueColor: AlwaysStoppedAnimation(
                 progress >= 1.0 ? colors.success : theme.colorScheme.primary,
               ),
