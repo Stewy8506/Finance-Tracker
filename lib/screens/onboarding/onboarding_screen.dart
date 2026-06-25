@@ -211,22 +211,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              theme.colorScheme.primary,
-                              theme.colorScheme.secondary,
-                            ],
-                          ),
+                          color: const Color(0xFF262626),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(Icons.account_balance_wallet,
-                            color: Colors.white, size: 22),
+                            color: Color(0xFFFFF5EE), size: 22),
                       ),
                       const SizedBox(width: 12),
                       Text(
                         'Ledger',
                         style: theme.textTheme.headlineMedium?.copyWith(
-                          color: theme.colorScheme.primary,
+                          color: const Color(0xFFFFF5EE),
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -243,7 +238,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           decoration: BoxDecoration(
                             color: isActive
                                 ? theme.colorScheme.primary
-                                : theme.colorScheme.primary.withValues(alpha: 0.2),
+                                : const Color(0xFF2E2E2E),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -383,15 +378,10 @@ class _Step1CTC extends StatelessWidget {
             duration: const Duration(milliseconds: 300),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  theme.colorScheme.primary.withValues(alpha: 0.15),
-                  theme.colorScheme.secondary.withValues(alpha: 0.1),
-                ],
-              ),
+              color: const Color(0xFF1E1E1E),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+                  color: const Color(0xFF2E2E2E)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -482,10 +472,10 @@ class _Step2Hike extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: _hikeLabelColor(context).withValues(alpha: 0.1),
+              color: const Color(0xFF1E1E1E),
               borderRadius: BorderRadius.circular(12),
               border:
-                  Border.all(color: _hikeLabelColor(context).withValues(alpha: 0.3)),
+                  Border.all(color: const Color(0xFF2E2E2E)),
             ),
             child: Row(
               children: [
@@ -547,7 +537,7 @@ class _Step3City extends StatelessWidget {
           DropdownButtonFormField<String>(
             initialValue: preset,
             decoration: const InputDecoration(labelText: 'City / Living Situation'),
-            dropdownColor: const Color(0xFF1E1E2E),
+            dropdownColor: const Color(0xFF1E1E1E),
             items: const [
               DropdownMenuItem(
                   value: 'kolkata_home', child: Text('Kolkata (living at home)')),
@@ -696,9 +686,9 @@ class _CorpusCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: const Color(0xFF2E2E2E)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -8,8 +8,8 @@ ThemeData buildDarkTheme() {
     brightness: Brightness.dark,
     primary: _kAccent,
     secondary: const Color(0xFF818CF8),
-    surface: const Color(0xFF1E1E2E),
-    onSurface: const Color(0xFFE0E0F0),
+    surface: const Color(0xFF1E1E1E),
+    onSurface: const Color(0xFFFFF5EE),
     error: const Color(0xFFF87171),
     tertiary: const Color(0xFF34D399),
   );
@@ -17,10 +17,10 @@ ThemeData buildDarkTheme() {
   return ThemeData(
     useMaterial3: true,
     colorScheme: colorScheme,
-    scaffoldBackgroundColor: const Color(0xFF12121F),
+    scaffoldBackgroundColor: const Color(0xFF141414),
     fontFamily: 'Roboto',
     appBarTheme: AppBarTheme(
-      backgroundColor: const Color(0xFF12121F),
+      backgroundColor: const Color(0xFF141414),
       foregroundColor: colorScheme.onSurface,
       elevation: 0,
       centerTitle: false,
@@ -32,29 +32,29 @@ ThemeData buildDarkTheme() {
       ),
     ),
     cardTheme: CardThemeData(
-      color: const Color(0xFF1E1E2E),
+      color: const Color(0xFF1E1E1E),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFF2D2D42), width: 1),
+        side: const BorderSide(color: Color(0xFF2E2E2E), width: 1),
       ),
       margin: EdgeInsets.zero,
     ),
     navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: const Color(0xFF1A1A2E),
+      backgroundColor: const Color(0xFF1A1A1A),
       indicatorColor: _kAccent.withValues(alpha: 0.2),
       iconTheme: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
           return const IconThemeData(color: _kAccent, size: 24);
         }
-        return const IconThemeData(color: Color(0xFF6B7280), size: 24);
+        return const IconThemeData(color: Color(0xFFA0A0A0), size: 24);
       }),
       labelTextStyle: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
           return const TextStyle(
               color: _kAccent, fontSize: 11, fontWeight: FontWeight.w600);
         }
-        return const TextStyle(color: Color(0xFF6B7280), fontSize: 11);
+        return const TextStyle(color: Color(0xFFA0A0A0), fontSize: 11);
       }),
     ),
     sliderTheme: SliderThemeData(
@@ -64,7 +64,7 @@ ThemeData buildDarkTheme() {
       overlayColor: _kAccent.withValues(alpha: 0.12),
     ),
     chipTheme: ChipThemeData(
-      backgroundColor: const Color(0xFF2D2D42),
+      backgroundColor: const Color(0xFF2E2E2E),
       selectedColor: _kAccent.withValues(alpha: 0.3),
       labelStyle: const TextStyle(fontSize: 12),
       side: BorderSide.none,
@@ -72,25 +72,25 @@ ThemeData buildDarkTheme() {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: const Color(0xFF1E1E2E),
+      fillColor: const Color(0xFF1E1E1E),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2D2D42)),
+        borderSide: const BorderSide(color: Color(0xFF2E2E2E)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2D2D42)),
+        borderSide: const BorderSide(color: Color(0xFF2E2E2E)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: _kAccent, width: 2),
       ),
-      labelStyle: const TextStyle(color: Color(0xFF9CA3AF)),
-      hintStyle: const TextStyle(color: Color(0xFF6B7280)),
+      labelStyle: const TextStyle(color: Color(0xFFA0A0A0)),
+      hintStyle: const TextStyle(color: Color(0xFF707070)),
     ),
     tabBarTheme: const TabBarThemeData(
       labelColor: _kAccent,
-      unselectedLabelColor: Color(0xFF6B7280),
+      unselectedLabelColor: Color(0xFFA0A0A0),
       indicator: UnderlineTabIndicator(
         borderSide: BorderSide(color: _kAccent, width: 2),
       ),
@@ -101,13 +101,13 @@ ThemeData buildDarkTheme() {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     snackBarTheme: SnackBarThemeData(
-      backgroundColor: const Color(0xFF2D2D42),
+      backgroundColor: const Color(0xFF2E2E2E),
       contentTextStyle: const TextStyle(color: Colors.white),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       behavior: SnackBarBehavior.floating,
     ),
     dividerTheme: const DividerThemeData(
-      color: Color(0xFF2D2D42),
+      color: Color(0xFF2E2E2E),
       thickness: 1,
     ),
     textTheme: const TextTheme(
@@ -124,7 +124,7 @@ ThemeData buildDarkTheme() {
       bodyLarge: TextStyle(fontSize: 16),
       bodyMedium: TextStyle(fontSize: 14),
       bodySmall:
-          TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+          TextStyle(fontSize: 12, color: Color(0xFFA0A0A0)),
       labelSmall:
           TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
     ),
@@ -158,8 +158,8 @@ class LedgerColors extends ThemeExtension<LedgerColors> {
     high: Color(0xFFF87171),
     medium: Color(0xFFFBBF24),
     low: Color(0xFF34D399),
-    cardGradientStart: Color(0xFF1E1E2E),
-    cardGradientEnd: Color(0xFF252538),
+    cardGradientStart: Color(0xFF1E1E1E),
+    cardGradientEnd: Color(0xFF1E1E1E),
   );
 
   @override
@@ -186,6 +186,15 @@ class LedgerColors extends ThemeExtension<LedgerColors> {
   @override
   ThemeExtension<LedgerColors> lerp(
       ThemeExtension<LedgerColors>? other, double t) {
-    return this;
+    if (other is! LedgerColors) return this;
+    return LedgerColors(
+      success: Color.lerp(success, other.success, t) ?? success,
+      warning: Color.lerp(warning, other.warning, t) ?? warning,
+      high: Color.lerp(high, other.high, t) ?? high,
+      medium: Color.lerp(medium, other.medium, t) ?? medium,
+      low: Color.lerp(low, other.low, t) ?? low,
+      cardGradientStart: Color.lerp(cardGradientStart, other.cardGradientStart, t) ?? cardGradientStart,
+      cardGradientEnd: Color.lerp(cardGradientEnd, other.cardGradientEnd, t) ?? cardGradientEnd,
+    );
   }
 }

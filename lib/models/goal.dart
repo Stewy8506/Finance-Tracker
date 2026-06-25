@@ -28,6 +28,9 @@ class Goal extends HiveObject {
   @HiveField(7)
   double? downPaymentPct;
 
+  @HiveField(8)
+  bool? adjustForInflation;
+
   Goal({
     required this.id,
     required this.name,
@@ -37,6 +40,7 @@ class Goal extends HiveObject {
     required this.priority,
     this.propertyValue,
     this.downPaymentPct,
+    this.adjustForInflation = false,
   });
 
   Goal copyWith({
@@ -48,6 +52,7 @@ class Goal extends HiveObject {
     String? priority,
     double? propertyValue,
     double? downPaymentPct,
+    bool? adjustForInflation,
   }) {
     return Goal(
       id: id ?? this.id,
@@ -58,6 +63,7 @@ class Goal extends HiveObject {
       priority: priority ?? this.priority,
       propertyValue: propertyValue ?? this.propertyValue,
       downPaymentPct: downPaymentPct ?? this.downPaymentPct,
+      adjustForInflation: adjustForInflation ?? this.adjustForInflation,
     );
   }
 }

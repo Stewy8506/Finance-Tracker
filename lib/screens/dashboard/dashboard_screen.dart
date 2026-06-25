@@ -66,20 +66,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: [
-                        theme.colorScheme.primary,
-                        theme.colorScheme.secondary,
-                      ]),
+                      color: const Color(0xFF262626),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(Icons.account_balance_wallet,
-                        color: Colors.white, size: 18),
+                        color: Color(0xFFFFF5EE), size: 18),
                   ),
                   const SizedBox(width: 10),
                   Text(
                     'Ledger',
                     style: theme.textTheme.titleLarge?.copyWith(
-                      color: theme.colorScheme.primary,
+                      color: const Color(0xFFFFF5EE),
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -102,25 +99,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   children: [
                     _StatCard(
                       label: 'Monthly Take-Home',
-                      value: formatCurrency(takeHome),
+                      numericValue: takeHome,
                       icon: Icons.account_balance_wallet_outlined,
                       color: theme.colorScheme.primary,
                     ),
                     _StatCard(
                       label: 'Monthly SIP',
-                      value: formatCurrency(sip),
+                      numericValue: sip,
                       icon: Icons.trending_up,
                       color: colors.success,
                     ),
                     _StatCard(
                       label: 'Free Cash / Month',
-                      value: formatCurrency(freeCash > 0 ? freeCash : 0),
+                      numericValue: freeCash > 0 ? freeCash : 0,
                       icon: Icons.savings_outlined,
                       color: colors.warning,
                     ),
                     _StatCard(
                       label: 'Corpus at Year 5',
-                      value: formatLakhsCrores(year5.corpus),
+                      numericValue: year5.corpus,
+                      isLakhsCrores: true,
                       icon: Icons.auto_graph,
                       color: theme.colorScheme.secondary,
                     ),
@@ -172,13 +170,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _StatCard extends StatelessWidget {
   final String label;
-  final String value;
+  final double numericValue;
+  final bool isLakhsCrores;
   final IconData icon;
   final Color color;
 
   const _StatCard({
     required this.label,
-    required this.value,
+    required this.numericValue,
+    this.isLakhsCrores = false,
     required this.icon,
     required this.color,
   });
@@ -189,16 +189,9 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1E1E2E),
-            color.withValues(alpha: 0.08),
-          ],
-        ),
+        color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        border: Border.all(color: const Color(0xFF2E2E2E)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,7 +200,7 @@ class _StatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
+              color: const Color(0xFF262626),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 18),
@@ -215,16 +208,28 @@ class _StatCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(value,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  )),
+              TweenAnimationBuilder<double>(
+                key: ValueKey(numericValue),
+                tween: Tween<double>(begin: 0, end: numericValue),
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.easeOutCubic,
+                builder: (context, val, child) {
+                  final formatted = isLakhsCrores
+                      ? formatLakhsCrores(val)
+                      : formatCurrency(val);
+                  return Text(
+                    formatted,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  );
+                },
+              ),
               const SizedBox(height: 2),
               Text(label,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: color.withValues(alpha: 0.8))),
+                  style: theme.textTheme.bodySmall),
             ],
           ),
         ],
@@ -288,10 +293,10 @@ class _BudgetPieChart extends StatelessWidget {
       height: 260,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E2E),
+        color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(16),
         border:
-            Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.1)),
+            Border.all(color: const Color(0xFF2E2E2E)),
       ),
       child: Row(
         children: [
@@ -469,13 +474,13 @@ class _SpendCalendarState extends State<_SpendCalendar> {
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? theme.colorScheme.primary.withValues(alpha: 0.2)
-                    : const Color(0xFF1E1E2E),
+                    ? const Color(0xFF262626)
+                    : const Color(0xFF1E1E1E),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isSelected
-                      ? theme.colorScheme.primary
-                      : const Color(0xFF2D2D42),
+                      ? const Color(0xFFFFF5EE)
+                      : const Color(0xFF2E2E2E),
                 ),
               ),
               child: Column(
@@ -548,9 +553,9 @@ class _MilestoneCard extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E2E),
+          color: const Color(0xFF1E1E1E),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF2D2D42)),
+          border: Border.all(color: const Color(0xFF2E2E2E)),
         ),
         child: Row(
           children: [
@@ -578,16 +583,9 @@ class _MilestoneCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colors.high.withValues(alpha: 0.08),
-            theme.colorScheme.primary.withValues(alpha: 0.08),
-          ],
-        ),
+        color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.high.withValues(alpha: 0.2)),
+        border: Border.all(color: const Color(0xFF2E2E2E)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -607,10 +605,7 @@ class _MilestoneCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: (fundedYear > 0 && fundedYear <= goal.targetYear
-                          ? colors.success
-                          : colors.high)
-                      .withValues(alpha: 0.15),
+                  color: const Color(0xFF262626),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(

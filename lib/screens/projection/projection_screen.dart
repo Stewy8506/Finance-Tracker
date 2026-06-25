@@ -108,8 +108,8 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  getDrawingHorizontalLine: (v) => FlLine(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                  getDrawingHorizontalLine: (v) => const FlLine(
+                    color: Color(0xFF2E2E2E),
                     strokeWidth: 1,
                   ),
                 ),
@@ -226,15 +226,7 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
                       ),
                     ),
                     belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          theme.colorScheme.primary.withValues(alpha: 0.25),
-                          theme.colorScheme.primary.withValues(alpha: 0),
-                        ],
-                      ),
+                      show: false,
                     ),
                   ),
                 ],
@@ -331,7 +323,7 @@ class _TableTab extends ConsumerWidget {
         child: DataTable(
           columnSpacing: 16,
           headingRowColor:
-              WidgetStateProperty.all(theme.colorScheme.primary.withValues(alpha: 0.1)),
+              WidgetStateProperty.all(const Color(0xFF222222)),
           columns: const [
             DataColumn(label: Text('Yr')),
             DataColumn(label: Text('CTC')),
@@ -463,17 +455,10 @@ class _WhatIfTabState extends ConsumerState<_WhatIfTab> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  (delta >= 0 ? colors.success : colors.high)
-                      .withValues(alpha: 0.12),
-                  theme.colorScheme.primary.withValues(alpha: 0.06),
-                ],
-              ),
+              color: const Color(0xFF1E1E1E),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                  color: (delta >= 0 ? colors.success : colors.high)
-                      .withValues(alpha: 0.3)),
+                  color: const Color(0xFF2E2E2E)),
             ),
             child: Row(
               children: [

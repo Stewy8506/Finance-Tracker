@@ -71,13 +71,12 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
       child: Text(
         title.toUpperCase(),
-        style: TextStyle(
-          color: theme.colorScheme.primary,
+        style: const TextStyle(
+          color: Color(0xFFA0A0A0),
           fontSize: 11,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.5,
@@ -100,6 +99,7 @@ class _ProfileEditor extends ConsumerStatefulWidget {
 }
 
 class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
+  final _formKey = GlobalKey<FormState>();
   late final TextEditingController _ctcCtrl;
   late final TextEditingController _hikeCtrl;
   late String _regime;
@@ -140,6 +140,7 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
   }
 
   void _save() {
+    if (!_formKey.currentState!.validate()) return;
     final updated = widget.profile.copyWith(
       startingCtcLpa: double.tryParse(_ctcCtrl.text) ?? widget.profile.startingCtcLpa,
       annualHikePct: (double.tryParse(_hikeCtrl.text) ?? 12) / 100,
@@ -164,69 +165,78 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
     final ctcLpa = double.tryParse(_ctcCtrl.text) ?? 0;
     final takeHome = finance.calculateTakeHome(ctcLpa, _regime);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E2E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2D2D42)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Live take-home preview
-          Container(
-            padding: const EdgeInsets.all(14),
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  theme.colorScheme.primary.withValues(alpha: 0.12),
-                  theme.colorScheme.secondary.withValues(alpha: 0.06),
+    return Form(
+      key: _formKey,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF2E2E2E)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Live take-home preview
+            Container(
+              padding: const EdgeInsets.all(14),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF262626),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.account_balance_wallet,
+                      color: theme.colorScheme.primary, size: 20),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Monthly Take-Home', style: theme.textTheme.bodySmall),
+                      Text(
+                        formatCurrency(takeHome),
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-              borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(
-              children: [
-                Icon(Icons.account_balance_wallet,
-                    color: theme.colorScheme.primary, size: 20),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Monthly Take-Home', style: theme.textTheme.bodySmall),
-                    Text(
-                      formatCurrency(takeHome),
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            TextFormField(
+              controller: _ctcCtrl,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: 'Current CTC (LPA)',
+                suffixText: 'LPA',
+              ),
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Enter CTC';
+                final val = double.tryParse(v);
+                if (val == null || val <= 0) return 'Enter a positive CTC';
+                return null;
+              },
             ),
-          ),
-          TextFormField(
-            controller: _ctcCtrl,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Current CTC (LPA)',
-              suffixText: 'LPA',
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _hikeCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Annual Hike %',
+                suffixText: '%',
+              ),
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Enter hike';
+                final val = double.tryParse(v);
+                if (val == null || val < 0 || val > 100) return 'Enter percentage 0-100';
+                return null;
+              },
             ),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _hikeCtrl,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'Annual Hike %',
-              suffixText: '%',
-            ),
-          ),
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
           // Tax regime toggle
           Text('Tax Regime', style: theme.textTheme.bodySmall),
           const SizedBox(height: 8),
@@ -250,7 +260,7 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
           DropdownButtonFormField<String>(
             initialValue: _cityPreset,
             decoration: const InputDecoration(labelText: 'City Preset'),
-            dropdownColor: const Color(0xFF1E1E2E),
+            dropdownColor: const Color(0xFF1E1E1E),
             items: const [
               DropdownMenuItem(
                   value: 'kolkata_home', child: Text('Kolkata (home)')),
@@ -353,8 +363,9 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -429,11 +440,11 @@ class _TaxCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E2E),
+        color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isBetter ? colors.success.withValues(alpha: 0.4) : const Color(0xFF2D2D42),
-          width: isBetter ? 2 : 1,
+          color: const Color(0xFF2E2E2E),
+          width: 1,
         ),
       ),
       child: Column(
@@ -459,7 +470,7 @@ class _TaxCard extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: colors.success.withValues(alpha: 0.15),
+                color: const Color(0xFF262626),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -491,6 +502,7 @@ class _AssumptionsEditor extends ConsumerStatefulWidget {
 }
 
 class _AssumptionsEditorState extends ConsumerState<_AssumptionsEditor> {
+  final _formKey = GlobalKey<FormState>();
   late final TextEditingController _sipRateCtrl;
   late final TextEditingController _cashRateCtrl;
   late final TextEditingController _inflationCtrl;
@@ -524,6 +536,7 @@ class _AssumptionsEditorState extends ConsumerState<_AssumptionsEditor> {
   }
 
   void _save() {
+    if (!_formKey.currentState!.validate()) return;
     final updated = widget.assumptions.copyWith(
       sipReturnRate: (double.tryParse(_sipRateCtrl.text) ?? 12) / 100,
       cashSavingsRate: (double.tryParse(_cashRateCtrl.text) ?? 6) / 100,
@@ -541,71 +554,109 @@ class _AssumptionsEditorState extends ConsumerState<_AssumptionsEditor> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E2E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2D2D42)),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _AssumptionField(
+    return Form(
+      key: _formKey,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF2E2E2E)),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: _AssumptionField(
                     label: 'SIP Return (%)',
                     ctrl: _sipRateCtrl,
-                    suffix: '%'),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _AssumptionField(
+                    suffix: '%',
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Enter rate';
+                      final val = double.tryParse(v);
+                      if (val == null || val < 0 || val > 100) return 'Enter 0-100';
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _AssumptionField(
                     label: 'Cash Savings (%)',
                     ctrl: _cashRateCtrl,
-                    suffix: '%'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _AssumptionField(
+                    suffix: '%',
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Enter rate';
+                      final val = double.tryParse(v);
+                      if (val == null || val < 0 || val > 100) return 'Enter 0-100';
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _AssumptionField(
                     label: 'Expense Inflation (%)',
                     ctrl: _inflationCtrl,
-                    suffix: '%'),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _AssumptionField(
+                    suffix: '%',
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Enter rate';
+                      final val = double.tryParse(v);
+                      if (val == null || val < 0 || val > 100) return 'Enter 0-100';
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _AssumptionField(
                     label: 'Home Loan Rate (%)',
                     ctrl: _loanRateCtrl,
-                    suffix: '%'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          _AssumptionField(
+                    suffix: '%',
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Enter rate';
+                      final val = double.tryParse(v);
+                      if (val == null || val < 0 || val > 100) return 'Enter 0-100';
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _AssumptionField(
               label: 'Loan Tenure (years)',
               ctrl: _tenureCtrl,
-              suffix: 'yrs'),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: _save,
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                side: BorderSide(color: theme.colorScheme.primary),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('Save Assumptions',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
+              suffix: 'yrs',
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Enter tenure';
+                final val = int.tryParse(v);
+                if (val == null || val < 1 || val > 30) return 'Enter 1-30 yrs';
+                return null;
+              },
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: _save,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(color: theme.colorScheme.primary),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Save Assumptions',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -615,9 +666,10 @@ class _AssumptionField extends StatelessWidget {
   final String label;
   final TextEditingController ctrl;
   final String suffix;
+  final String? Function(String?)? validator;
 
   const _AssumptionField(
-      {required this.label, required this.ctrl, required this.suffix});
+      {required this.label, required this.ctrl, required this.suffix, this.validator});
 
   @override
   Widget build(BuildContext context) {
@@ -625,6 +677,7 @@ class _AssumptionField extends StatelessWidget {
       controller: ctrl,
       keyboardType:
           const TextInputType.numberWithOptions(decimal: true),
+      validator: validator,
       decoration: InputDecoration(
           labelText: label,
           suffixText: suffix,
@@ -650,9 +703,9 @@ class _DataSection extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E2E),
+        color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2D2D42)),
+        border: Border.all(color: const Color(0xFF2E2E2E)),
       ),
       child: Column(
         children: [
@@ -662,7 +715,7 @@ class _DataSection extends ConsumerWidget {
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                color: const Color(0xFF262626),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.download_outlined,
@@ -720,7 +773,7 @@ class _DataSection extends ConsumerWidget {
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: colors.high.withValues(alpha: 0.15),
+                color: const Color(0xFF262626),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.delete_sweep_outlined,
@@ -744,7 +797,7 @@ class _DataSection extends ConsumerWidget {
                     FilledButton(
                       onPressed: () => Navigator.pop(ctx, true),
                       style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFF87171)),
+                          backgroundColor: theme.colorScheme.error),
                       child: const Text('Reset'),
                     ),
                   ],

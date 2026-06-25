@@ -200,7 +200,10 @@ int yearsToGoal(
 ) {
   for (int y = 1; y <= 30; y++) {
     final corpus = corpusAtYear(y, profile, purchases, assumptions);
-    if (corpus >= goal.targetAmount) return y;
+    final target = goal.adjustForInflation == true
+        ? goal.targetAmount * math.pow(1 + assumptions.expenseInflation, y)
+        : goal.targetAmount;
+    if (corpus >= target) return y;
   }
   return 0;
 }
@@ -246,7 +249,10 @@ List<YearProjection> generateProjection(
 
     final newlyFunded = <String>[];
     for (final goal in goals) {
-      if (!fundedGoals.contains(goal.id) && corpus >= goal.targetAmount) {
+      final target = goal.adjustForInflation == true
+          ? goal.targetAmount * math.pow(1 + assumptions.expenseInflation, y)
+          : goal.targetAmount;
+      if (!fundedGoals.contains(goal.id) && corpus >= target) {
         fundedGoals.add(goal.id);
         newlyFunded.add(goal.name);
       }

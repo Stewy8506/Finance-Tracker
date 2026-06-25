@@ -25,13 +25,14 @@ class GoalAdapter extends TypeAdapter<Goal> {
       priority: fields[5] as String,
       propertyValue: fields[6] as double?,
       downPaymentPct: fields[7] as double?,
+      adjustForInflation: fields[8] as bool?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Goal obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -47,7 +48,9 @@ class GoalAdapter extends TypeAdapter<Goal> {
       ..writeByte(6)
       ..write(obj.propertyValue)
       ..writeByte(7)
-      ..write(obj.downPaymentPct);
+      ..write(obj.downPaymentPct)
+      ..writeByte(8)
+      ..write(obj.adjustForInflation);
   }
 
   @override
