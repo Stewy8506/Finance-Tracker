@@ -28,6 +28,18 @@ GoRouter buildAppRouter(bool onboardingComplete) {
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
       ),
+      GoRoute(
+        path: '/goals',
+        builder: (context, state) => const GoalsScreen(),
+      ),
+      GoRoute(
+        path: '/purchases',
+        builder: (context, state) => const PurchasesScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             ShellScreen(navigationShell: navigationShell),
@@ -43,30 +55,6 @@ GoRouter buildAppRouter(bool onboardingComplete) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/goals',
-                builder: (context, state) => const GoalsScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/purchases',
-                builder: (context, state) => const PurchasesScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/projection',
-                builder: (context, state) => const ProjectionScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
                 path: '/ledger',
                 builder: (context, state) => const LedgerScreen(),
               ),
@@ -75,8 +63,8 @@ GoRouter buildAppRouter(bool onboardingComplete) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/settings',
-                builder: (context, state) => const SettingsScreen(),
+                path: '/projection',
+                builder: (context, state) => const ProjectionScreen(),
               ),
             ],
           ),

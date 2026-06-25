@@ -115,6 +115,22 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
     Navigator.pop(context);
   }
 
+  void _delete() {
+    HapticFeedback.lightImpact();
+    ref.read(purchasesProvider.notifier).delete(widget.existing!.id);
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${widget.existing!.name} deleted'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () =>
+              ref.read(purchasesProvider.notifier).add(widget.existing!),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -281,6 +297,27 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
                   ),
                 ),
               ),
+              if (widget.existing != null) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: _delete,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFEF4444),
+                      side: const BorderSide(color: Color(0xFFEF4444)),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text(
+                      'Delete Purchase',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

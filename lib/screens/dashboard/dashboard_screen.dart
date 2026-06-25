@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -65,6 +66,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             expandedHeight: 80,
             floating: true,
             pinned: false,
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: IconButton(
+                  icon: const Icon(Icons.settings_outlined, color: Color(0xFFF4F4F6)),
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    context.push('/settings');
+                  },
+                ),
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
               title: Row(
@@ -76,12 +89,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       color: const Color(0xFF1F2128),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.account_balance_wallet,
+                    child: const Icon(Icons.grid_view_outlined,
                         color: Color(0xFFF4F4F6), size: 18),
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'Ledger',
+                    'Dashboard',
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: const Color(0xFFF4F4F6),
                       fontWeight: FontWeight.w800,
@@ -116,6 +129,37 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         (profile.liabilities ?? 0);
                     return nw0 > 0 ? ((nw1 - nw0) / nw0) * 100 : 0.0;
                   }(),
+                ),
+                const SizedBox(height: 12),
+
+                // ── Quick Actions ─────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _QuickActionButton(
+                          icon: Icons.flag_outlined,
+                          label: 'Goals Tracker',
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            context.push('/goals');
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _QuickActionButton(
+                          icon: Icons.shopping_bag_outlined,
+                          label: 'Spend Planner',
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            context.push('/purchases');
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 12),
 
@@ -238,13 +282,57 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 const SizedBox(height: 24),
 
                 // ── Spend calendar ─────────────────────────────────────────
-                _SectionHeader('This Year\'s Spend Calendar'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _SectionHeader("This Year's Spend Calendar"),
+                    TextButton(
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        context.push('/purchases');
+                      },
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Row(
+                        children: [
+                          Text('View All', style: TextStyle(fontSize: 12, color: Color(0xFF818CF8), fontWeight: FontWeight.w700)),
+                          Icon(Icons.chevron_right, size: 16, color: Color(0xFF818CF8)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 _SpendCalendar(purchases: purchases),
                 const SizedBox(height: 24),
 
                 // ── Milestone card ─────────────────────────────────────────
-                _SectionHeader('Next Milestone'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _SectionHeader('Next Milestone'),
+                    TextButton(
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        context.push('/goals');
+                      },
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Row(
+                        children: [
+                          Text('View All', style: TextStyle(fontSize: 12, color: Color(0xFF818CF8), fontWeight: FontWeight.w700)),
+                          Icon(Icons.chevron_right, size: 16, color: Color(0xFF818CF8)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 _MilestoneCard(
                   projections: projections,
@@ -780,21 +868,27 @@ class _MilestoneCard extends StatelessWidget {
     final colors = theme.extension<LedgerColors>()!;
 
     if (goals.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF111215),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF1F2128)),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.flag_outlined,
-                color: theme.colorScheme.primary.withValues(alpha: 0.5)),
-            const SizedBox(width: 12),
-            Text('Add a goal to see your next milestone.',
-                style: theme.textTheme.bodyMedium),
-          ],
+      return GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          context.push('/goals');
+        },
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF111215),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF1F2128)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.flag_outlined,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+              const SizedBox(width: 12),
+              Text('Add a goal to see your next milestone.',
+                  style: theme.textTheme.bodyMedium),
+            ],
+          ),
         ),
       );
     }
@@ -814,72 +908,78 @@ class _MilestoneCard extends StatelessWidget {
         ? 'by ${startYear + fundedYear}'
         : '30+ yrs';
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF111215),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1F2128)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.flag, color: colors.high, size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  goal.name,
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(color: Colors.white),
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1F2128),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  fundedLabel,
-                  style: TextStyle(
-                    color: fundedYear > 0 && fundedYear <= goal.targetYear
-                        ? colors.success
-                        : colors.high,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        context.push('/goals');
+      },
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF111215),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF1F2128)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.flag, color: colors.high, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    goal.name,
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(color: Colors.white),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Target: ${formatLakhsCrores(goal.targetAmount)}',
-                  style: theme.textTheme.bodySmall),
-              Text(
-                  '${(progress * 100).toStringAsFixed(0)}% funded',
-                  style:
-                      TextStyle(color: colors.success, fontSize: 12)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 8,
-              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-              valueColor: AlwaysStoppedAnimation(
-                progress >= 1.0 ? colors.success : theme.colorScheme.primary,
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1F2128),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    fundedLabel,
+                    style: TextStyle(
+                      color: fundedYear > 0 && fundedYear <= goal.targetYear
+                          ? colors.success
+                          : colors.high,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Target: ${formatLakhsCrores(goal.targetAmount)}',
+                    style: theme.textTheme.bodySmall),
+                Text(
+                    '${(progress * 100).toStringAsFixed(0)}% funded',
+                    style:
+                        TextStyle(color: colors.success, fontSize: 12)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 8,
+                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                valueColor: AlwaysStoppedAnimation(
+                  progress >= 1.0 ? colors.success : theme.colorScheme.primary,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1421,4 +1521,49 @@ class _WaterfallItem {
   final bool isTotal;
 
   _WaterfallItem(this.label, this.amount, this.color, {this.isTotal = false});
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QUICK ACTION BUTTON
+// ─────────────────────────────────────────────────────────────────────────────
+class _QuickActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _QuickActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF111215),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF1F2128), width: 0.8),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: const Color(0xFF818CF8), size: 18),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: const Color(0xFFF4F4F6),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

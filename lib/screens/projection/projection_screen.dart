@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -96,9 +97,26 @@ class _ProjectionScreenState extends ConsumerState<ProjectionScreen>
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.flag_outlined),
+            tooltip: 'Goals Tracker',
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              context.push('/goals');
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.shopping_bag_outlined),
+            tooltip: 'Spend Planner',
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              context.push('/purchases');
+            },
+          ),
           if (isCorpusTab)
             IconButton(
               icon: const Icon(Icons.share_outlined),
+              tooltip: 'Share Chart',
               onPressed: _shareChart,
             ),
         ],

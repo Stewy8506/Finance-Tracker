@@ -25,33 +25,15 @@ class ShellScreen extends ConsumerWidget {
       ),
       _NavDestination(
         index: 1,
-        outlineIcon: Icons.flag_outlined,
-        filledIcon: Icons.flag,
-        label: 'Goals',
-      ),
-      _NavDestination(
-        index: 2,
-        outlineIcon: Icons.shopping_bag_outlined,
-        filledIcon: Icons.shopping_bag,
-        label: 'Purchases',
-      ),
-      _NavDestination(
-        index: 3,
-        outlineIcon: Icons.bar_chart_outlined,
-        filledIcon: Icons.bar_chart,
-        label: 'Projection',
-      ),
-      _NavDestination(
-        index: 4,
         outlineIcon: Icons.account_balance_wallet_outlined,
         filledIcon: Icons.account_balance_wallet,
         label: 'Ledger',
       ),
       _NavDestination(
-        index: 5,
-        outlineIcon: Icons.settings_outlined,
-        filledIcon: Icons.settings,
-        label: 'Settings',
+        index: 2,
+        outlineIcon: Icons.bar_chart_outlined,
+        filledIcon: Icons.bar_chart,
+        label: 'Projection',
       ),
     ];
 
@@ -64,8 +46,8 @@ class ShellScreen extends ConsumerWidget {
           // Floating Bottom Navigation Bar
           Positioned(
             bottom: 20,
-            left: 12,
-            right: 12,
+            left: 24,
+            right: 24,
             child: SafeArea(
               top: false,
               bottom: true,
@@ -74,7 +56,7 @@ class ShellScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(32),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
+                      color: Colors.black.withValues(alpha: 0.35),
                       blurRadius: 16,
                       offset: const Offset(0, 4),
                     ),
@@ -85,7 +67,7 @@ class ShellScreen extends ConsumerWidget {
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                       decoration: BoxDecoration(
                         color: const Color(0xFF111215).withValues(alpha: 0.8),
                         borderRadius: BorderRadius.circular(32),
@@ -125,7 +107,7 @@ class ShellScreen extends ConsumerWidget {
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
         padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 12 : 8,
+          horizontal: isSelected ? 16 : 12,
           vertical: 10,
         ),
         decoration: BoxDecoration(
@@ -143,7 +125,7 @@ class ShellScreen extends ConsumerWidget {
               size: 20,
             ),
             if (isSelected) ...[
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Text(
                 item.label,
                 style: GoogleFonts.plusJakartaSans(
@@ -164,7 +146,7 @@ class ShellScreen extends ConsumerWidget {
       onTap: () => _onDestinationSelected(item.index),
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
