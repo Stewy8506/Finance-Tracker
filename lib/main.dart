@@ -5,6 +5,7 @@ import 'models/user_profile.dart';
 import 'models/goal.dart';
 import 'models/recurring_purchase.dart';
 import 'models/assumptions.dart';
+import 'models/income_source.dart';
 import 'theme.dart';
 import 'router.dart';
 import 'finance.dart';
@@ -21,12 +22,14 @@ Future<void> main() async {
   Hive.registerAdapter(GoalAdapter());
   Hive.registerAdapter(RecurringPurchaseAdapter());
   Hive.registerAdapter(AssumptionsAdapter());
+  Hive.registerAdapter(IncomeSourceAdapter());
 
   // Open Hive boxes
   await Hive.openBox<UserProfile>('user_profile');
   await Hive.openBox<Goal>('goals');
   await Hive.openBox<RecurringPurchase>('purchases');
   await Hive.openBox<Assumptions>('assumptions');
+  await Hive.openBox<IncomeSource>('income_sources');
 
   // Verify finance engine assertions in debug mode
   assert(() {

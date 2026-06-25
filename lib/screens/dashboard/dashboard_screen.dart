@@ -12,6 +12,7 @@ import '../../providers/projection_provider.dart';
 import '../../providers/purchases_provider.dart';
 import '../../providers/goals_provider.dart';
 import '../../providers/assumptions_provider.dart';
+import '../../providers/income_provider.dart';
 import '../../theme.dart';
 import '../../utils/currency_formatter.dart';
 
@@ -34,6 +35,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final purchases = ref.watch(purchasesProvider);
     final goals = ref.watch(goalsProvider);
     final assumptions = ref.watch(assumptionsProvider);
+    final incomeSources = ref.watch(incomeSourcesProvider);
 
     if (profile == null || projections.isEmpty) {
       return const Scaffold(
@@ -49,7 +51,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final expenses = year1.expensesMonthly;
     final sip = year1.sipMonthly;
     final freeCash = year1.freeCashMonthly;
-    final takeHome = year1.takeHomeMonthly;
+    final takeHome = year1.totalIncome > 0 ? year1.totalIncome : year1.takeHomeMonthly;
+    final hasExtraIncome = year1.additionalIncome > 0;
+    final emergencyMonths = finance.emergencyFundMonths(profile);
 
     return Scaffold(
       body: CustomScrollView(
@@ -98,7 +102,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   childAspectRatio: 1.5,
                   children: [
                     _StatCard(
-                      label: 'Monthly Take-Home',
+                      label: hasExtraIncome ? 'Total Income' : 'Monthly Take-Home',
                       numericValue: takeHome,
                       icon: Icons.account_balance_wallet_outlined,
                       color: theme.colorScheme.primary,
@@ -123,6 +127,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       color: theme.colorScheme.secondary,
                     ),
                   ],
+                ),
+                const SizedBox(height: 16),
+
+                // ── Emergency fund card ─────────────────────────────────
+                _EmergencyFundCard(
+                  balance: profile.emergencyFundBalance ?? 0,
+                  coverageMonths: emergencyMonths,
+                  onUpdate: () => _showEmergencyFundDialog(context, ref, profile),
                 ),
                 const SizedBox(height: 24),
 
@@ -155,9 +167,48 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   assumptions: assumptions,
                   profile: profile,
                   purchases: purchases,
+                  incomeSources: incomeSources,
                 ),
               ]),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEmergencyFundDialog(
+      BuildContext context, WidgetRef ref, UserProfile profile) {
+    final ctrl = TextEditingController(
+        text: (profile.emergencyFundBalance ?? 0).toInt().toString());
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Update Emergency Fund'),
+        content: TextField(
+          controller: ctrl,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Current Balance',
+            prefixText: '₹ ',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final val = double.tryParse(ctrl.text);
+              if (val != null && val >= 0) {
+                ref.read(userProfileProvider.notifier).save(
+                      profile.copyWith(emergencyFundBalance: val),
+                    );
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('Save'),
           ),
         ],
       ),
@@ -535,6 +586,7 @@ class _MilestoneCard extends StatelessWidget {
   final Assumptions assumptions;
   final UserProfile profile;
   final List<RecurringPurchase> purchases;
+  final List<dynamic> incomeSources;
 
   const _MilestoneCard({
     required this.projections,
@@ -542,6 +594,7 @@ class _MilestoneCard extends StatelessWidget {
     required this.assumptions,
     required this.profile,
     required this.purchases,
+    this.incomeSources = const [],
   });
 
   @override
@@ -579,6 +632,10 @@ class _MilestoneCard extends StatelessWidget {
             : 0.0;
     final fundedYear = finance.yearsToGoal(
         goal, profile, purchases, assumptions);
+    final startYear = profile.startYear ?? DateTime.now().year;
+    final fundedLabel = fundedYear > 0
+        ? 'by ${startYear + fundedYear}'
+        : '30+ yrs';
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -609,9 +666,7 @@ class _MilestoneCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  fundedYear > 0
-                      ? 'Year $fundedYear'
-                      : '30+ yrs',
+                  fundedLabel,
                   style: TextStyle(
                     color: fundedYear > 0 && fundedYear <= goal.targetYear
                         ? colors.success
@@ -644,6 +699,148 @@ class _MilestoneCard extends StatelessWidget {
               backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
               valueColor: AlwaysStoppedAnimation(
                 progress >= 1.0 ? colors.success : theme.colorScheme.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EMERGENCY FUND CARD
+// ─────────────────────────────────────────────────────────────────────────────
+class _EmergencyFundCard extends StatelessWidget {
+  final double balance;
+  final double coverageMonths;
+  final VoidCallback onUpdate;
+
+  const _EmergencyFundCard({
+    required this.balance,
+    required this.coverageMonths,
+    required this.onUpdate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.extension<LedgerColors>()!;
+
+    // Color coding: red < 3 months, amber 3–6, green 6+
+    final Color statusColor;
+    final String statusLabel;
+    final IconData statusIcon;
+    if (coverageMonths >= 6) {
+      statusColor = colors.success;
+      statusLabel = 'Healthy';
+      statusIcon = Icons.check_circle_outline;
+    } else if (coverageMonths >= 3) {
+      statusColor = colors.warning;
+      statusLabel = 'Building';
+      statusIcon = Icons.warning_amber_outlined;
+    } else {
+      statusColor = colors.high;
+      statusLabel = 'Critical';
+      statusIcon = Icons.error_outline;
+    }
+
+    // Progress toward 6-month target
+    final progress = (coverageMonths / 6.0).clamp(0.0, 1.0);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF2E2E2E)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF262626),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.shield_outlined, color: statusColor, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Emergency Fund',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        )),
+                    Text(
+                      '${coverageMonths.toStringAsFixed(1)} months covered',
+                      style: TextStyle(color: statusColor, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF262626),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(statusIcon, color: statusColor, size: 14),
+                    const SizedBox(width: 4),
+                    Text(statusLabel,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        )),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Balance: ${formatCurrency(balance)}',
+                style: theme.textTheme.bodySmall,
+              ),
+              Text(
+                'Target: 6 months',
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 6,
+              backgroundColor: const Color(0xFF2E2E2E),
+              valueColor: AlwaysStoppedAnimation(statusColor),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: onUpdate,
+              icon: const Icon(Icons.edit_outlined, size: 14),
+              label: const Text('Update', style: TextStyle(fontSize: 12)),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ),
           ),

@@ -8,6 +8,7 @@ import 'models/user_profile.dart';
 import 'models/goal.dart';
 import 'models/recurring_purchase.dart';
 import 'models/assumptions.dart';
+import 'models/income_source.dart';
 import 'models/year_projection.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -83,6 +84,55 @@ double calculateTakeHome(double ctcLpa, String regime) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// STEPPED SALARY HIKES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Computes CTC at a given year using stepped hike brackets.
+/// Year 0 = starting CTC, year 1 = first hike applied, etc.
+double ctcAtYear(UserProfile profile, int year) {
+  double ctc = profile.startingCtcLpa;
+  for (int y = 1; y <= year; y++) {
+    ctc *= (1 + profile.hikeRateForYear(y));
+  }
+  return ctc;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MULTIPLE INCOME SOURCES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Total additional monthly income at a given year from all extra sources.
+double additionalMonthlyIncome(List<IncomeSource> sources, int year) {
+  double total = 0;
+  for (final s in sources) {
+    total += s.amountAtYear(year);
+  }
+  return total;
+}
+
+/// Total monthly income (salary take-home + additional sources) at a given year.
+double totalMonthlyIncome(
+  UserProfile profile,
+  List<IncomeSource> incomeSources,
+  int year,
+) {
+  final ctc = ctcAtYear(profile, year);
+  final salaryTakeHome = calculateTakeHome(ctc, profile.taxRegime);
+  return salaryTakeHome + additionalMonthlyIncome(incomeSources, year);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EMERGENCY FUND
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Emergency fund coverage in months of current expenses.
+double emergencyFundMonths(UserProfile profile) {
+  final monthlyExpenses = _baseMonthlyExpenses(profile);
+  if (monthlyExpenses <= 0) return 0;
+  return (profile.emergencyFundBalance ?? 0) / monthlyExpenses;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SIP
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -155,23 +205,27 @@ double totalSpendOverYears(RecurringPurchase p, int horizonYears) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Cumulative corpus at end of [targetYear].
+/// Now uses stepped hike brackets and additional income sources.
 double corpusAtYear(
   int targetYear,
   UserProfile profile,
   List<RecurringPurchase> purchases,
-  Assumptions assumptions,
-) {
+  Assumptions assumptions, {
+  List<IncomeSource> incomeSources = const [],
+}) {
   double sipCorpus = 0;
   double cashCorpus = 0;
 
   for (int y = 1; y <= targetYear; y++) {
-    final ctcThisYear = profile.startingCtcLpa *
-        math.pow(1 + profile.annualHikePct, y - 1);
-    final takeHome = calculateTakeHome(ctcThisYear, profile.taxRegime);
+    final ctcThisYear = ctcAtYear(profile, y - 1);
+    final salaryTakeHome = calculateTakeHome(ctcThisYear, profile.taxRegime);
+    final extraIncome = additionalMonthlyIncome(incomeSources, y);
+    final totalIncome = salaryTakeHome + extraIncome;
+
     final expenses =
         getMonthlyExpenses(profile, y - 1, assumptions.expenseInflation);
-    final sipMonthly = takeHome * profile.sipRatePct;
-    final freeCash = takeHome - expenses - sipMonthly;
+    final sipMonthly = totalIncome * profile.sipRatePct;
+    final freeCash = totalIncome - expenses - sipMonthly;
     final discretionary = annualPurchaseSpend(purchases, y);
 
     // SIP invested this year, compounded for remaining years
@@ -196,10 +250,12 @@ int yearsToGoal(
   Goal goal,
   UserProfile profile,
   List<RecurringPurchase> purchases,
-  Assumptions assumptions,
-) {
+  Assumptions assumptions, {
+  List<IncomeSource> incomeSources = const [],
+}) {
   for (int y = 1; y <= 30; y++) {
-    final corpus = corpusAtYear(y, profile, purchases, assumptions);
+    final corpus = corpusAtYear(y, profile, purchases, assumptions,
+        incomeSources: incomeSources);
     final target = goal.adjustForInflation == true
         ? goal.targetAmount * math.pow(1 + assumptions.expenseInflation, y)
         : goal.targetAmount;
@@ -230,22 +286,27 @@ List<YearProjection> generateProjection(
   UserProfile profile,
   List<Goal> goals,
   List<RecurringPurchase> purchases,
-  Assumptions assumptions,
-) {
+  Assumptions assumptions, {
+  List<IncomeSource> incomeSources = const [],
+}) {
   final projections = <YearProjection>[];
   final fundedGoals = <String>{};
 
   for (int y = 0; y <= 20; y++) {
-    final ctcThisYear =
-        profile.startingCtcLpa * math.pow(1 + profile.annualHikePct, y);
-    final takeHome = calculateTakeHome(ctcThisYear, profile.taxRegime);
-    final sipMonthly = takeHome * profile.sipRatePct;
+    final ctcThisYear = ctcAtYear(profile, y);
+    final salaryTakeHome = calculateTakeHome(ctcThisYear, profile.taxRegime);
+    final extraIncome = additionalMonthlyIncome(incomeSources, y);
+    final totalIncome = salaryTakeHome + extraIncome;
+
+    final sipMonthly = totalIncome * profile.sipRatePct;
     final expenses =
         getMonthlyExpenses(profile, y, assumptions.expenseInflation);
-    final freeCash = takeHome - expenses - sipMonthly;
+    final freeCash = totalIncome - expenses - sipMonthly;
     final techSpend = annualPurchaseSpend(purchases, y);
-    final corpus =
-        y == 0 ? 0.0 : corpusAtYear(y, profile, purchases, assumptions);
+    final corpus = y == 0
+        ? 0.0
+        : corpusAtYear(y, profile, purchases, assumptions,
+            incomeSources: incomeSources);
 
     final newlyFunded = <String>[];
     for (final goal in goals) {
@@ -261,13 +322,15 @@ List<YearProjection> generateProjection(
     projections.add(YearProjection(
       year: y,
       ctcLpa: ctcThisYear,
-      takeHomeMonthly: takeHome,
+      takeHomeMonthly: salaryTakeHome,
       sipMonthly: sipMonthly,
       techSpendAnnual: techSpend,
       corpus: corpus,
       goalsFunded: newlyFunded,
       expensesMonthly: expenses,
       freeCashMonthly: freeCash,
+      additionalIncome: extraIncome,
+      totalIncome: totalIncome,
     ));
   }
 
@@ -291,4 +354,26 @@ void verifyFinanceEngine() {
   // EMI: ₹1Cr at 8.5% for 20yr ≈ ₹86,849
   final emi = monthlyEmi(10000000, 0.085, 20);
   assert(emi > 86000 && emi < 88000, 'Expected ~₹86849 EMI, got $emi');
+
+  // Stepped hike: verify ctcAtYear uses brackets
+  final testProfile = UserProfile(
+    startingCtcLpa: 10.0,
+    annualHikePct: 0.12,
+    taxRegime: 'new',
+    cityPreset: 'custom',
+    monthlyRent: 0,
+    monthlyFood: 8000,
+    monthlyTransport: 3000,
+    monthlyMisc: 5000,
+    sipRatePct: 0.15,
+    onboardingComplete: true,
+    hikeBracketsRaw: [
+      {'fromYear': 1, 'toYear': 3, 'hikePct': 0.20},
+      {'fromYear': 4, 'toYear': 99, 'hikePct': 0.10},
+    ],
+  );
+  // Year 0 = 10 LPA, Year 1 = 10 * 1.20 = 12 LPA
+  final ctcY1 = ctcAtYear(testProfile, 1);
+  assert(ctcY1 > 11.9 && ctcY1 < 12.1,
+      'Expected ~12 LPA at year 1 with 20% bracket, got $ctcY1');
 }

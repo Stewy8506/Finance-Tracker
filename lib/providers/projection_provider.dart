@@ -5,18 +5,23 @@ import 'user_profile_provider.dart';
 import 'goals_provider.dart';
 import 'purchases_provider.dart';
 import 'assumptions_provider.dart';
+import 'income_provider.dart';
 
 /// Computed list of year-by-year projections (year 0–20).
-/// Re-computes whenever profile, goals, purchases, or assumptions change.
+/// Re-computes whenever profile, goals, purchases, assumptions, or income sources change.
 final projectionProvider = Provider<List<YearProjection>>((ref) {
   final profile = ref.watch(userProfileProvider);
   final goals = ref.watch(goalsProvider);
   final purchases = ref.watch(purchasesProvider);
   final assumptions = ref.watch(assumptionsProvider);
+  final incomeSources = ref.watch(incomeSourcesProvider);
 
   if (profile == null) return [];
 
-  return finance.generateProjection(profile, goals, purchases, assumptions);
+  return finance.generateProjection(
+    profile, goals, purchases, assumptions,
+    incomeSources: incomeSources,
+  );
 });
 
 /// Convenience provider for a single year's projection.

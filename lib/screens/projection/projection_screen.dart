@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../finance.dart' as finance;
+import '../../models/user_profile.dart';
+import '../../models/year_projection.dart';
 import '../../providers/projection_provider.dart';
 import '../../providers/goals_provider.dart';
 import '../../providers/user_profile_provider.dart';
 import '../../providers/purchases_provider.dart';
 import '../../providers/assumptions_provider.dart';
+import '../../providers/income_provider.dart';
 import '../../theme.dart';
 import '../../utils/currency_formatter.dart';
 
@@ -71,6 +74,7 @@ class _CorpusTab extends ConsumerStatefulWidget {
 
 class _CorpusTabState extends ConsumerState<_CorpusTab> {
   int? _touchedIndex;
+  bool _compareRegimes = false;
 
   @override
   Widget build(BuildContext context) {
@@ -81,6 +85,7 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
     final profile = ref.watch(userProfileProvider);
     final purchases = ref.watch(purchasesProvider);
     final assumptions = ref.watch(assumptionsProvider);
+    final incomeSources = ref.watch(incomeSourcesProvider);
 
     if (projections.isEmpty || profile == null) {
       return const Center(child: CircularProgressIndicator());
@@ -89,6 +94,26 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
     final spots = projections
         .map((p) => FlSpot(p.year.toDouble(), p.corpus / 100000))
         .toList();
+
+    List<YearProjection> otherProjections = [];
+    List<FlSpot> otherSpots = [];
+    double delta = 0;
+    if (_compareRegimes) {
+      final otherProfile = profile.copyWith(
+        taxRegime: profile.taxRegime == 'new' ? 'old' : 'new',
+      );
+      otherProjections = finance.generateProjection(
+        otherProfile,
+        goals,
+        purchases,
+        assumptions,
+        incomeSources: incomeSources,
+      );
+      otherSpots = otherProjections
+          .map((p) => FlSpot(p.year.toDouble(), p.corpus / 100000))
+          .toList();
+      delta = projections.last.corpus - otherProjections.last.corpus;
+    }
 
     final maxY = projections.isEmpty
         ? 100.0
@@ -128,10 +153,15 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      getTitlesWidget: (v, _) => Text(
-                        'Yr ${v.toInt()}',
-                        style: const TextStyle(fontSize: 10),
-                      ),
+                      getTitlesWidget: (v, _) {
+                        final yr = v.toInt();
+                        if (yr < 0 || yr > 20) return const SizedBox.shrink();
+                        final startYear = profile.startYear ?? DateTime.now().year;
+                        return Text(
+                          '${startYear + yr}',
+                          style: const TextStyle(fontSize: 10),
+                        );
+                      },
                       interval: 5,
                     ),
                   ),
@@ -144,18 +174,25 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
                   enabled: true,
                   touchTooltipData: LineTouchTooltipData(
                     tooltipRoundedRadius: 12,
-                    getTooltipItems: (spots) => spots.map((s) {
-                      final proj = projections.firstWhere(
+                    getTooltipItems: (touchedSpots) => touchedSpots.map((s) {
+                      final isAlternative = s.barIndex == 1;
+                      final projList = isAlternative ? otherProjections : projections;
+                      if (projList.isEmpty) return null;
+                      final proj = projList.firstWhere(
                           (p) => p.year == s.x.toInt(),
-                          orElse: () => projections.first);
+                          orElse: () => projList.first);
+                      final startYear = profile.startYear ?? DateTime.now().year;
+                      final regimeName = isAlternative 
+                          ? (profile.taxRegime == 'new' ? 'Old' : 'New')
+                          : (profile.taxRegime == 'new' ? 'New' : 'Old');
                       return LineTooltipItem(
-                        'Year ${s.x.toInt()}\n'
+                        '${startYear + s.x.toInt()} ($regimeName)\n'
                         'Corpus: ${formatLakhsCrores(proj.corpus)}\n'
                         'CTC: ${formatLpa(proj.ctcLpa)}',
                         const TextStyle(
                             color: Colors.white, fontSize: 12),
                       );
-                    }).toList(),
+                    }).whereType<LineTooltipItem>().toList(),
                   ),
                   touchCallback: (event, response) {
                     if (response?.lineBarSpots != null) {
@@ -229,6 +266,20 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
                       show: false,
                     ),
                   ),
+                  if (_compareRegimes)
+                    LineChartBarData(
+                      spots: otherSpots,
+                      isCurved: true,
+                      curveSmoothness: 0.3,
+                      color: const Color(0xFFA0A0A0),
+                      barWidth: 2,
+                      isStrokeCapRound: true,
+                      dashArray: [6, 4],
+                      dotData: const FlDotData(show: false),
+                      belowBarData: BarAreaData(
+                        show: false,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -236,13 +287,20 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
         ),
         // Legend
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           child: Wrap(
             spacing: 12,
             runSpacing: 8,
             children: [
               _LegendItem(
-                  color: theme.colorScheme.primary, label: 'Total Corpus'),
+                  color: theme.colorScheme.primary,
+                  label: 'Corpus (${profile.taxRegime == 'new' ? 'New' : 'Old'})'),
+              if (_compareRegimes)
+                const _LegendItem(
+                  color: Color(0xFFA0A0A0),
+                  label: 'Corpus (Alt)',
+                  dashed: true,
+                ),
               ...goals.map((g) {
                 final c = g.priority == 'high'
                     ? colors.high
@@ -255,6 +313,64 @@ class _CorpusTabState extends ConsumerState<_CorpusTab> {
             ],
           ),
         ),
+        // Regime comparison toggle & delta card
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Compare Tax Regimes',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Switch(
+                value: _compareRegimes,
+                onChanged: (val) {
+                  setState(() {
+                    _compareRegimes = val;
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
+        if (_compareRegimes)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF2E2E2E)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    delta >= 0 ? Icons.check_circle_outline : Icons.warning_amber_outlined,
+                    color: delta >= 0 ? colors.success : colors.warning,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Builder(
+                      builder: (context) {
+                        final currentRegimeName = profile.taxRegime == 'new' ? 'New' : 'Old';
+                        final otherRegimeName = profile.taxRegime == 'new' ? 'Old' : 'New';
+                        final bestRegimeName = delta >= 0 ? currentRegimeName : otherRegimeName;
+                        return Text(
+                          'Using the $bestRegimeName regime results in a ${formatLakhsCrores(delta.abs())} higher corpus after 20 years compared to the ${delta >= 0 ? otherRegimeName : currentRegimeName} regime.',
+                          style: const TextStyle(fontSize: 12, color: Color(0xFFFFF5EE)),
+                        );
+                      }
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -308,12 +424,15 @@ class _TableTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final projections = ref.watch(projectionProvider);
+    final profile = ref.watch(userProfileProvider);
     final theme = Theme.of(context);
     final colors = theme.extension<LedgerColors>()!;
 
     if (projections.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
+
+    final startYear = profile?.startYear ?? DateTime.now().year;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(8),
@@ -325,7 +444,7 @@ class _TableTab extends ConsumerWidget {
           headingRowColor:
               WidgetStateProperty.all(const Color(0xFF222222)),
           columns: const [
-            DataColumn(label: Text('Yr')),
+            DataColumn(label: Text('Year')),
             DataColumn(label: Text('CTC')),
             DataColumn(label: Text('Take-Home')),
             DataColumn(label: Text('SIP/mo')),
@@ -350,7 +469,7 @@ class _TableTab extends ConsumerWidget {
                                   color: colors.success, width: 3)),
                         )
                       : null,
-                  child: Text('${p.year}'),
+                  child: Text('${startYear + p.year}'),
                 )),
                 DataCell(Text(formatLpa(p.ctcLpa))),
                 DataCell(Text(formatLakhsCrores(p.takeHomeMonthly * 12))),
@@ -406,7 +525,7 @@ class _WhatIfTab extends ConsumerStatefulWidget {
 }
 
 class _WhatIfTabState extends ConsumerState<_WhatIfTab> {
-  double _hikeOverride = 12;
+  List<HikeBracket>? _whatIfBrackets;
   double _sipOverride = 15;
   double _houseTarget = 15000000;
 
@@ -420,18 +539,29 @@ class _WhatIfTabState extends ConsumerState<_WhatIfTab> {
     final purchases = ref.watch(purchasesProvider);
     final assumptions = ref.watch(assumptionsProvider);
     final baseProjections = ref.watch(projectionProvider);
+    final incomeSources = ref.watch(incomeSourcesProvider);
 
     if (profile == null || baseProjections.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
+    if (_whatIfBrackets == null) {
+      _whatIfBrackets = profile.hikeBrackets;
+      if (_whatIfBrackets!.isEmpty) {
+        _whatIfBrackets = UserProfile.defaultHikeBrackets(profile.annualHikePct);
+      }
+    }
+
     // Generate what-if projection (ephemeral, not saved)
     final whatIfProfile = profile.copyWith(
-      annualHikePct: _hikeOverride / 100,
       sipRatePct: _sipOverride / 100,
     );
+    if (_whatIfBrackets != null) {
+      whatIfProfile.hikeBrackets = _whatIfBrackets!;
+    }
     final whatIfProjections = finance.generateProjection(
-        whatIfProfile, goals, purchases, assumptions);
+        whatIfProfile, goals, purchases, assumptions,
+        incomeSources: incomeSources);
 
     final baseCorpus10 =
         baseProjections.firstWhere((p) => p.year == 10).corpus;
@@ -493,17 +623,57 @@ class _WhatIfTabState extends ConsumerState<_WhatIfTab> {
           ),
           const SizedBox(height: 24),
 
-          // Sliders
-          _SliderRow(
-            label: 'Salary Hike',
-            value: _hikeOverride,
-            min: 8,
-            max: 30,
-            divisions: 22,
-            format: (v) => '${v.toInt()}%',
-            onChanged: (v) => setState(() => _hikeOverride = v),
-            accentColor: theme.colorScheme.primary,
-          ),
+          // Hike Brackets Editor on What-If tab
+          Text('Salary Hike Brackets', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          ..._whatIfBrackets!.map((bracket) {
+            final index = _whatIfBrackets!.indexOf(bracket);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Text(bracket.label, style: theme.textTheme.bodyMedium),
+                  ),
+                  Expanded(
+                    flex: 5,
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        activeTrackColor: theme.colorScheme.primary,
+                        thumbColor: theme.colorScheme.primary,
+                        overlayColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+                        inactiveTrackColor: theme.colorScheme.primary.withValues(alpha: 0.2),
+                      ),
+                      child: Slider(
+                        value: bracket.hikePct * 100,
+                        min: 0,
+                        max: 50,
+                        divisions: 50,
+                        onChanged: (v) {
+                          setState(() {
+                            _whatIfBrackets![index] = HikeBracket(
+                              fromYear: bracket.fromYear,
+                              toYear: bracket.toYear,
+                              hikePct: v / 100,
+                            );
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 40,
+                    child: Text(
+                      '${(bracket.hikePct * 100).toInt()}%',
+                      textAlign: TextAlign.end,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
           const SizedBox(height: 20),
           _SliderRow(
             label: 'SIP Rate (% of take-home)',

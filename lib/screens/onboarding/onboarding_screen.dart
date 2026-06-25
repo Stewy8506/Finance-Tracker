@@ -26,6 +26,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   // Step 1
   final _ctcController = TextEditingController(text: '10');
+  final _startYearController = TextEditingController(text: DateTime.now().year.toString());
   double get _ctcLpa => double.tryParse(_ctcController.text) ?? 0;
 
   // Step 2
@@ -66,6 +67,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void dispose() {
     _pageController.dispose();
     _ctcController.dispose();
+    _startYearController.dispose();
     _rentController.dispose();
     _foodController.dispose();
     _transportController.dispose();
@@ -108,6 +110,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       monthlyMisc: double.tryParse(_miscController.text) ?? 6000,
       sipRatePct: _sipPct / 100,
       onboardingComplete: true,
+      startYear: int.tryParse(_startYearController.text) ?? DateTime.now().year,
+      emergencyFundBalance: 0,
     );
 
     final userProfileNotifier = ref.read(userProfileProvider.notifier);
@@ -261,6 +265,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 children: [
                   _Step1CTC(
                     controller: _ctcController,
+                    startYearController: _startYearController,
                     takeHome:
                         finance.calculateTakeHome(_ctcLpa, 'new'),
                   ),
@@ -340,9 +345,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _Step1CTC extends StatelessWidget {
   final TextEditingController controller;
+  final TextEditingController startYearController;
   final double takeHome;
 
-  const _Step1CTC({required this.controller, required this.takeHome});
+  const _Step1CTC({
+    required this.controller,
+    required this.startYearController,
+    required this.takeHome,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -371,6 +381,16 @@ class _Step1CTC extends StatelessWidget {
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w600,
               ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: startYearController,
+            keyboardType: TextInputType.number,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+            decoration: const InputDecoration(
+              labelText: 'Start Year of Tracker',
+              hintText: 'e.g. 2026',
             ),
           ),
           const SizedBox(height: 24),

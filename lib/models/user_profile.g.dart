@@ -27,13 +27,18 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
       monthlyMisc: fields[7] as double,
       sipRatePct: fields[8] as double,
       onboardingComplete: fields[9] as bool,
+      hikeBracketsRaw: fields[10] as List<dynamic>?,
+      emergencyFundBalance: fields[11] as double?,
+      startYear: fields[12] as int?,
+      otherAssets: fields[13] as double?,
+      liabilities: fields[14] as double?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserProfile obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.startingCtcLpa)
       ..writeByte(1)
@@ -53,7 +58,17 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
       ..writeByte(8)
       ..write(obj.sipRatePct)
       ..writeByte(9)
-      ..write(obj.onboardingComplete);
+      ..write(obj.onboardingComplete)
+      ..writeByte(10)
+      ..write(obj.hikeBracketsRaw)
+      ..writeByte(11)
+      ..write(obj.emergencyFundBalance)
+      ..writeByte(12)
+      ..write(obj.startYear)
+      ..writeByte(13)
+      ..write(obj.otherAssets)
+      ..writeByte(14)
+      ..write(obj.liabilities);
   }
 
   @override

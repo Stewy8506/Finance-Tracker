@@ -2,13 +2,43 @@ import 'package:hive/hive.dart';
 
 part 'user_profile.g.dart';
 
+/// Represents a salary hike bracket: a range of years and the hike % for that range.
+class HikeBracket {
+  final int fromYear; // inclusive, 1-indexed
+  final int toYear;   // inclusive (use 99 for "forever")
+  final double hikePct; // e.g. 0.20 for 20%
+
+  const HikeBracket({
+    required this.fromYear,
+    required this.toYear,
+    required this.hikePct,
+  });
+
+  Map<String, dynamic> toMap() => {
+    'fromYear': fromYear,
+    'toYear': toYear,
+    'hikePct': hikePct,
+  };
+
+  factory HikeBracket.fromMap(Map<dynamic, dynamic> map) => HikeBracket(
+    fromYear: map['fromYear'] as int,
+    toYear: map['toYear'] as int,
+    hikePct: (map['hikePct'] as num).toDouble(),
+  );
+
+  String get label {
+    if (toYear >= 99) return 'Year $fromYear+';
+    return 'Year $fromYear–$toYear';
+  }
+}
+
 @HiveType(typeId: 0)
 class UserProfile extends HiveObject {
   @HiveField(0)
   double startingCtcLpa;
 
   @HiveField(1)
-  double annualHikePct; // e.g. 0.12 for 12%
+  double annualHikePct; // e.g. 0.12 for 12% — fallback when hikeBrackets is empty
 
   @HiveField(2)
   String taxRegime; // 'new' | 'old'
@@ -34,6 +64,27 @@ class UserProfile extends HiveObject {
   @HiveField(9)
   bool onboardingComplete;
 
+  /// Stepped hike brackets. Serialized as List<Map> for Hive compatibility.
+  /// Empty list means use flat `annualHikePct`.
+  @HiveField(10)
+  List<dynamic>? hikeBracketsRaw;
+
+  /// Emergency fund balance in ₹.
+  @HiveField(11)
+  double? emergencyFundBalance;
+
+  /// The calendar year when the user started tracking (e.g. 2026).
+  @HiveField(12)
+  int? startYear;
+
+  /// Other assets (gold, FDs, etc.) for net worth calculation.
+  @HiveField(13)
+  double? otherAssets;
+
+  /// Total liabilities (education loans, etc.) for net worth calculation.
+  @HiveField(14)
+  double? liabilities;
+
   UserProfile({
     required this.startingCtcLpa,
     required this.annualHikePct,
@@ -45,7 +96,45 @@ class UserProfile extends HiveObject {
     required this.monthlyMisc,
     required this.sipRatePct,
     required this.onboardingComplete,
+    this.hikeBracketsRaw,
+    this.emergencyFundBalance,
+    this.startYear,
+    this.otherAssets,
+    this.liabilities,
   });
+
+  // ── Hike bracket helpers ──────────────────────────────────────────────
+
+  List<HikeBracket> get hikeBrackets {
+    if (hikeBracketsRaw == null || hikeBracketsRaw!.isEmpty) return [];
+    return hikeBracketsRaw!
+        .map((e) => HikeBracket.fromMap(e as Map<dynamic, dynamic>))
+        .toList();
+  }
+
+  set hikeBrackets(List<HikeBracket> brackets) {
+    hikeBracketsRaw = brackets.map((b) => b.toMap()).toList();
+  }
+
+  /// Returns the hike rate for a given year.
+  /// Falls back to flat `annualHikePct` if no brackets are defined.
+  double hikeRateForYear(int year) {
+    final brackets = hikeBrackets;
+    if (brackets.isEmpty) return annualHikePct;
+    for (final b in brackets) {
+      if (year >= b.fromYear && year <= b.toYear) return b.hikePct;
+    }
+    // If year is beyond all brackets, use the last bracket's rate
+    return brackets.last.hikePct;
+  }
+
+  // ── Default hike brackets ─────────────────────────────────────────────
+
+  static List<HikeBracket> defaultHikeBrackets(double fallbackPct) => [
+    HikeBracket(fromYear: 1, toYear: 3, hikePct: fallbackPct),
+    HikeBracket(fromYear: 4, toYear: 7, hikePct: fallbackPct * 0.8),
+    HikeBracket(fromYear: 8, toYear: 99, hikePct: fallbackPct * 0.6),
+  ];
 
   UserProfile copyWith({
     double? startingCtcLpa,
@@ -58,6 +147,11 @@ class UserProfile extends HiveObject {
     double? monthlyMisc,
     double? sipRatePct,
     bool? onboardingComplete,
+    List<dynamic>? hikeBracketsRaw,
+    double? emergencyFundBalance,
+    int? startYear,
+    double? otherAssets,
+    double? liabilities,
   }) {
     return UserProfile(
       startingCtcLpa: startingCtcLpa ?? this.startingCtcLpa,
@@ -70,6 +164,11 @@ class UserProfile extends HiveObject {
       monthlyMisc: monthlyMisc ?? this.monthlyMisc,
       sipRatePct: sipRatePct ?? this.sipRatePct,
       onboardingComplete: onboardingComplete ?? this.onboardingComplete,
+      hikeBracketsRaw: hikeBracketsRaw ?? this.hikeBracketsRaw,
+      emergencyFundBalance: emergencyFundBalance ?? this.emergencyFundBalance,
+      startYear: startYear ?? this.startYear,
+      otherAssets: otherAssets ?? this.otherAssets,
+      liabilities: liabilities ?? this.liabilities,
     );
   }
 

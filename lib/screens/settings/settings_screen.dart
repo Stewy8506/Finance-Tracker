@@ -9,6 +9,7 @@ import '../../providers/user_profile_provider.dart';
 import '../../providers/goals_provider.dart';
 import '../../providers/purchases_provider.dart';
 import '../../providers/assumptions_provider.dart';
+import '../../providers/income_provider.dart';
 import '../../theme.dart';
 import '../../utils/currency_formatter.dart';
 
@@ -38,6 +39,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SectionHeader('Profile'),
           const SizedBox(height: 12),
           _ProfileEditor(profile: profile),
+          const SizedBox(height: 24),
+
+          // ── ADDITIONAL INCOME ──────────────────────────────────────────
+          _SectionHeader('Additional Income Streams'),
+          const SizedBox(height: 12),
+          const _AdditionalIncomeEditor(),
           const SizedBox(height: 24),
 
           // ── 2. TAX COMPARISON ──────────────────────────────────────────
@@ -109,6 +116,9 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
   late final TextEditingController _transportCtrl;
   late final TextEditingController _miscCtrl;
   late double _sipPct;
+  late final TextEditingController _emergencyFundCtrl;
+  late final TextEditingController _startYearCtrl;
+  late List<HikeBracket> _hikeBrackets;
 
   @override
   void initState() {
@@ -125,6 +135,14 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
         TextEditingController(text: p.monthlyTransport.toInt().toString());
     _miscCtrl = TextEditingController(text: p.monthlyMisc.toInt().toString());
     _sipPct = p.sipRatePct * 100;
+    _emergencyFundCtrl = TextEditingController(
+        text: (p.emergencyFundBalance ?? 0).toInt().toString());
+    _startYearCtrl = TextEditingController(
+        text: (p.startYear ?? DateTime.now().year).toString());
+    _hikeBrackets = List.from(p.hikeBrackets);
+    if (_hikeBrackets.isEmpty) {
+      _hikeBrackets = UserProfile.defaultHikeBrackets(p.annualHikePct);
+    }
     _ctcCtrl.addListener(() => setState(() {}));
   }
 
@@ -136,6 +154,8 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
     _foodCtrl.dispose();
     _transportCtrl.dispose();
     _miscCtrl.dispose();
+    _emergencyFundCtrl.dispose();
+    _startYearCtrl.dispose();
     super.dispose();
   }
 
@@ -152,7 +172,10 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
           double.tryParse(_transportCtrl.text) ?? widget.profile.monthlyTransport,
       monthlyMisc: double.tryParse(_miscCtrl.text) ?? widget.profile.monthlyMisc,
       sipRatePct: _sipPct / 100,
+      emergencyFundBalance: double.tryParse(_emergencyFundCtrl.text) ?? 0,
+      startYear: int.tryParse(_startYearCtrl.text) ?? DateTime.now().year,
     );
+    updated.hikeBrackets = _hikeBrackets;
     ref.read(userProfileProvider.notifier).save(updated);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Profile saved')),
@@ -226,7 +249,7 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
               controller: _hikeCtrl,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                labelText: 'Annual Hike %',
+                labelText: 'Annual Hike % (Fallback)',
                 suffixText: '%',
               ),
               validator: (v) {
@@ -236,6 +259,95 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
                 return null;
               },
             ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _startYearCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Start Year',
+                    ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Enter year';
+                      final val = int.tryParse(v);
+                      if (val == null || val < 2000 || val > 2100) return 'Invalid year';
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextFormField(
+                    controller: _emergencyFundCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Emergency Fund',
+                      prefixText: '₹ ',
+                    ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Enter balance';
+                      final val = double.tryParse(v);
+                      if (val == null || val < 0) return 'Invalid balance';
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text('Stepped Salary Hike Brackets',
+                style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            ..._hikeBrackets.map((bracket) {
+              final index = _hikeBrackets.indexOf(bracket);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Text(bracket.label, style: theme.textTheme.bodyMedium),
+                    ),
+                    Expanded(
+                      flex: 5,
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: theme.colorScheme.primary,
+                          thumbColor: theme.colorScheme.primary,
+                          overlayColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+                          inactiveTrackColor: theme.colorScheme.primary.withValues(alpha: 0.2),
+                        ),
+                        child: Slider(
+                          value: bracket.hikePct * 100,
+                          min: 0,
+                          max: 50,
+                          divisions: 50,
+                          onChanged: (v) {
+                            setState(() {
+                              _hikeBrackets[index] = HikeBracket(
+                                fromYear: bracket.fromYear,
+                                toYear: bracket.toYear,
+                                hikePct: v / 100,
+                              );
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 40,
+                      child: Text(
+                        '${(bracket.hikePct * 100).toInt()}%',
+                        textAlign: TextAlign.end,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
             const SizedBox(height: 12),
           // Tax regime toggle
           Text('Tax Regime', style: theme.textTheme.bodySmall),
@@ -810,6 +922,163 @@ class _DataSection extends ConsumerWidget {
                 await ref.read(assumptionsProvider.notifier).reset();
               }
             },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdditionalIncomeEditor extends ConsumerWidget {
+  const _AdditionalIncomeEditor();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colors = theme.extension<LedgerColors>()!;
+    final sources = ref.watch(incomeSourcesProvider);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF2E2E2E)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (sources.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                'No additional income sources defined.',
+                style: theme.textTheme.bodyMedium?.copyWith(color: const Color(0xFFA0A0A0)),
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: sources.length,
+              separatorBuilder: (context, index) => const Divider(height: 16),
+              itemBuilder: (context, index) {
+                final source = sources[index];
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(source.label, style: theme.textTheme.titleMedium),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${formatCurrency(source.monthlyAmount)}/mo · Growth: ${(source.annualGrowthPct * 100).toInt()}%/yr',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.delete_outline, color: colors.high, size: 20),
+                      onPressed: () {
+                        ref.read(incomeSourcesProvider.notifier).delete(source.id);
+                      },
+                    ),
+                  ],
+                );
+              },
+            ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Add Income Source'),
+              onPressed: () => _showAddDialog(context, ref),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddDialog(BuildContext context, WidgetRef ref) {
+    final labelCtrl = TextEditingController();
+    final amountCtrl = TextEditingController();
+    final growthCtrl = TextEditingController(text: '5');
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add Income Source'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: labelCtrl,
+                decoration: const InputDecoration(labelText: 'Label (e.g. Freelance)'),
+                validator: (v) => v == null || v.isEmpty ? 'Enter label' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: amountCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Monthly Amount (₹)',
+                  prefixText: '₹ ',
+                ),
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Enter amount';
+                  final val = double.tryParse(v);
+                  if (val == null || val <= 0) return 'Invalid amount';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: growthCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Annual Growth Rate (%)',
+                  suffixText: '%',
+                ),
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Enter growth rate';
+                  final val = double.tryParse(v);
+                  if (val == null || val < 0 || val > 100) return 'Enter 0-100';
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                ref.read(incomeSourcesProvider.notifier).addNew(
+                      label: labelCtrl.text,
+                      monthlyAmount: double.parse(amountCtrl.text),
+                      annualGrowthPct: double.parse(growthCtrl.text) / 100,
+                    );
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text('Add'),
           ),
         ],
       ),

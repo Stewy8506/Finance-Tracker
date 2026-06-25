@@ -11,6 +11,12 @@ class YearProjection {
   final double expensesMonthly;
   final double freeCashMonthly;
 
+  /// Additional income from non-salary sources at this year.
+  final double additionalIncome;
+
+  /// Total monthly income (salary take-home + additional).
+  final double totalIncome;
+
   const YearProjection({
     required this.year,
     required this.ctcLpa,
@@ -21,5 +27,7 @@ class YearProjection {
     required this.goalsFunded,
     required this.expensesMonthly,
     required this.freeCashMonthly,
+    this.additionalIncome = 0,
+    this.totalIncome = 0,
   });
 }
