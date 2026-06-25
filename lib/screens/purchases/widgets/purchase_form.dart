@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../finance.dart' as finance;
@@ -110,6 +111,7 @@ class _PurchaseFormState extends ConsumerState<PurchaseForm> {
     } else {
       ref.read(purchasesProvider.notifier).add(purchase);
     }
+    HapticFeedback.mediumImpact();
     Navigator.pop(context);
   }
 

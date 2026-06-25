@@ -6,10 +6,10 @@ const _kBoxName = 'goals';
 
 class GoalsNotifier extends StateNotifier<List<Goal>> {
   GoalsNotifier() : super([]) {
-    _load();
+    load();
   }
 
-  void _load() {
+  void load() {
     final box = Hive.box<Goal>(_kBoxName);
     state = box.values.toList();
   }

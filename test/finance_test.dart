@@ -130,19 +130,6 @@ void main() {
     });
 
     test('multiple income sources total income', () {
-      final profile = UserProfile(
-        startingCtcLpa: 12.0,
-        annualHikePct: 0.10,
-        taxRegime: 'new',
-        cityPreset: 'custom',
-        monthlyRent: 0,
-        monthlyFood: 0,
-        monthlyTransport: 0,
-        monthlyMisc: 0,
-        sipRatePct: 0.20,
-        onboardingComplete: true,
-      );
-
       final sources = [
         IncomeSource(id: 's1', label: 'Freelance', monthlyAmount: 20000, annualGrowthPct: 0.10),
         IncomeSource(id: 's2', label: 'Rent', monthlyAmount: 10000, annualGrowthPct: 0.05),

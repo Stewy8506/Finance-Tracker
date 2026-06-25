@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 class ShellScreen extends StatelessWidget {
@@ -13,6 +14,7 @@ class ShellScreen extends StatelessWidget {
       bottomNavigationBar: NavigationBar(
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: (index) {
+          HapticFeedback.lightImpact();
           navigationShell.goBranch(
             index,
             initialLocation: index == navigationShell.currentIndex,

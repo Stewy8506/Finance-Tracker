@@ -13,6 +13,10 @@ class IncomeSourcesNotifier extends StateNotifier<List<IncomeSource>> {
 
   IncomeSourcesNotifier() : super([]) {
     _box = Hive.box<IncomeSource>('income_sources');
+    load();
+  }
+
+  void load() {
     state = _box.values.toList();
   }
 

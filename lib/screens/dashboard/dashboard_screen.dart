@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../finance.dart' as finance;
@@ -7,6 +8,7 @@ import '../../models/goal.dart';
 import '../../models/assumptions.dart';
 import '../../models/user_profile.dart';
 import '../../models/recurring_purchase.dart';
+import '../../models/income_source.dart';
 import '../../providers/user_profile_provider.dart';
 import '../../providers/projection_provider.dart';
 import '../../providers/purchases_provider.dart';
@@ -25,6 +27,7 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int? _tappedPieIndex;
+  bool _showWaterfall = false;
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +95,49 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
+                // ── Net Worth summary card ───────────────────────────────
+                _NetWorthCard(
+                  netWorth: (projections.first.corpus) +
+                      (profile.emergencyFundBalance ?? 0) +
+                      (profile.otherAssets ?? 0) -
+                      (profile.liabilities ?? 0),
+                  emergencyFund: profile.emergencyFundBalance ?? 0,
+                  otherAssets: profile.otherAssets ?? 0,
+                  liabilities: profile.liabilities ?? 0,
+                  investedCorpus: projections.first.corpus,
+                  trendPercent: () {
+                    final nw0 = (projections.first.corpus) +
+                        (profile.emergencyFundBalance ?? 0) +
+                        (profile.otherAssets ?? 0) -
+                        (profile.liabilities ?? 0);
+                    final nw1 = (projections.firstWhere((p) => p.year == 1, orElse: () => projections.first).corpus) +
+                        (profile.emergencyFundBalance ?? 0) +
+                        (profile.otherAssets ?? 0) -
+                        (profile.liabilities ?? 0);
+                    return nw0 > 0 ? ((nw1 - nw0) / nw0) * 100 : 0.0;
+                  }(),
+                ),
+                const SizedBox(height: 12),
+
+                // ── Financial Health Score Card ──────────────────────────
+                _FinancialHealthScoreCard(
+                  score: finance.financialHealthScore(
+                    profile,
+                    assumptions,
+                    goals,
+                    purchases,
+                    incomeSources,
+                    projections,
+                  ),
+                  profile: profile,
+                  assumptions: assumptions,
+                  goals: goals,
+                  purchases: purchases,
+                  incomeSources: incomeSources,
+                  projections: projections,
+                ),
+                const SizedBox(height: 16),
+
                 // ── 4 stat cards ──────────────────────────────────────────
                 GridView.count(
                   crossAxisCount: 2,
@@ -138,18 +184,57 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // ── Monthly budget pie chart ───────────────────────────────
-                _SectionHeader('Monthly Budget'),
-                const SizedBox(height: 12),
-                _BudgetPieChart(
-                  expenses: expenses,
-                  sip: sip,
-                  freeCash: freeCash > 0 ? freeCash : 0,
-                  total: takeHome,
-                  tappedIndex: _tappedPieIndex,
-                  onTap: (i) =>
-                      setState(() => _tappedPieIndex = i == _tappedPieIndex ? null : i),
+                 // ── Monthly budget pie chart ───────────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _SectionHeader('Monthly Budget'),
+                    Row(
+                      children: [
+                         ChoiceChip(
+                          label: const Text('Pie'),
+                          selected: !_showWaterfall,
+                          onSelected: (val) {
+                            if (val) {
+                              HapticFeedback.lightImpact();
+                              setState(() => _showWaterfall = false);
+                            }
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        ChoiceChip(
+                          label: const Text('Waterfall'),
+                          selected: _showWaterfall,
+                          onSelected: (val) {
+                            if (val) {
+                              HapticFeedback.lightImpact();
+                              setState(() => _showWaterfall = true);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 12),
+                if (!_showWaterfall)
+                  _BudgetPieChart(
+                    expenses: expenses,
+                    sip: sip,
+                    freeCash: freeCash > 0 ? freeCash : 0,
+                    total: takeHome,
+                    tappedIndex: _tappedPieIndex,
+                    onTap: (i) =>
+                        setState(() => _tappedPieIndex = i == _tappedPieIndex ? null : i),
+                  )
+                else
+                  _CashFlowWaterfall(
+                    takeHome: takeHome,
+                    expenses: expenses,
+                    sip: sip,
+                    purchases: finance.annualPurchaseSpend(purchases, 1) / 12,
+                    freeCash: takeHome - expenses - sip - (finance.annualPurchaseSpend(purchases, 1) / 12),
+                  ),
                 const SizedBox(height: 24),
 
                 // ── Spend calendar ─────────────────────────────────────────
@@ -365,7 +450,10 @@ class _BudgetPieChart extends StatelessWidget {
                         if (event is FlTapUpEvent) {
                           final idx = response
                               ?.touchedSection?.touchedSectionIndex;
-                          if (idx != null) onTap(idx);
+                          if (idx != null) {
+                            HapticFeedback.lightImpact();
+                            onTap(idx);
+                          }
                         }
                       },
                     ),
@@ -428,7 +516,10 @@ class _BudgetPieChart extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: GestureDetector(
-                    onTap: () => onTap(i),
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      onTap(i);
+                    },
                     child: Row(
                       children: [
                         Container(
@@ -500,79 +591,165 @@ class _SpendCalendarState extends State<_SpendCalendar> {
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
 
-    // Year 1 purchases occur in first year — show them spread across calendar
-    // For simplicity, show all year-1 purchases on month 1 and recurring on month 1
-    final hasPurchaseInYear1 = widget.purchases.isNotEmpty;
+    final purchasesList = widget.purchases.cast<RecurringPurchase>();
 
-    return SizedBox(
-      height: 90,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: 12,
-        itemBuilder: (context, i) {
-          // Show dot for month 1 (first purchase month) and every 3rd month for recurring
-          final hasDot = hasPurchaseInYear1 && (i == 0 || i == 2 || i == 5 || i == 8 || i == 11);
-          final isSelected = _tappedMonth == i;
+    // Group purchases by month deterministically based on p.id hash
+    final purchasesByMonth = List.generate(12, (_) => <RecurringPurchase>[]);
+    for (final p in purchasesList) {
+      if (p.firstYear == 1) {
+        final monthIdx = (p.id.hashCode.abs() % 12);
+        purchasesByMonth[monthIdx].add(p);
+      }
+    }
 
-          return GestureDetector(
-            onTap: () => setState(() {
-              _tappedMonth = isSelected ? null : i;
-            }),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 64,
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFF262626)
-                    : const Color(0xFF1E1E1E),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected
-                      ? const Color(0xFFFFF5EE)
-                      : const Color(0xFF2E2E2E),
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(months[i],
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: isSelected
-                            ? theme.colorScheme.primary
-                            : null,
-                        fontWeight: isSelected ? FontWeight.w600 : null,
-                      )),
-                  const SizedBox(height: 6),
-                  if (hasDot)
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFBBF24),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    )
-                  else
-                    const SizedBox(height: 7),
-                  if (isSelected && hasDot)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        'Spend',
-                        style: TextStyle(
-                          fontSize: 9,
-                          color: const Color(0xFFFBBF24),
-                        ),
-                      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 90,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: 12,
+            itemBuilder: (context, i) {
+              final hasDot = purchasesByMonth[i].isNotEmpty;
+              final isSelected = _tappedMonth == i;
+
+              return GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _tappedMonth = isSelected ? null : i;
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 64,
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? const Color(0xFF262626)
+                        : const Color(0xFF1E1E1E),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color(0xFFFFF5EE)
+                          : const Color(0xFF2E2E2E),
                     ),
-                ],
-              ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(months[i],
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: isSelected
+                                ? theme.colorScheme.primary
+                                : null,
+                            fontWeight: isSelected ? FontWeight.w600 : null,
+                          )),
+                      const SizedBox(height: 6),
+                      if (hasDot)
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFBBF24),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        )
+                      else
+                        const SizedBox(height: 7),
+                      if (isSelected && hasDot)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            'Spend',
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: const Color(0xFFFBBF24),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        if (_tappedMonth != null) ...[
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF2E2E2E)),
             ),
-          );
-        },
-      ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Planned Spend in ${months[_tappedMonth!]} (Year 1)',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (purchasesByMonth[_tappedMonth!].isEmpty)
+                  Text(
+                    'No planned purchases this month.',
+                    style: theme.textTheme.bodyMedium?.copyWith(color: const Color(0xFFA0A0A0)),
+                  )
+                else
+                  ...purchasesByMonth[_tappedMonth!].map((p) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFBBF24),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(p.name,
+                                        style: theme.textTheme.bodyLarge?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white)),
+                                    if (p.note != null && p.note!.isNotEmpty)
+                                      Text(p.note!,
+                                          style: theme.textTheme.bodySmall?.copyWith(
+                                              color: const Color(0xFFA0A0A0))),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            Text(
+                              formatCurrency(p.amount),
+                              style: TextStyle(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -834,7 +1011,10 @@ class _EmergencyFundCard extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton.icon(
-              onPressed: onUpdate,
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                onUpdate();
+              },
               icon: const Icon(Icons.edit_outlined, size: 14),
               label: const Text('Update', style: TextStyle(fontSize: 12)),
               style: TextButton.styleFrom(
@@ -848,4 +1028,397 @@ class _EmergencyFundCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _NetWorthCard extends StatelessWidget {
+  final double netWorth;
+  final double emergencyFund;
+  final double otherAssets;
+  final double liabilities;
+  final double investedCorpus;
+  final double trendPercent;
+
+  const _NetWorthCard({
+    required this.netWorth,
+    required this.emergencyFund,
+    required this.otherAssets,
+    required this.liabilities,
+    required this.investedCorpus,
+    required this.trendPercent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.extension<LedgerColors>()!;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF2E2E2E)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('NET WORTH',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: const Color(0xFFA0A0A0),
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.5,
+                  )),
+              Tooltip(
+                triggerMode: TooltipTriggerMode.tap,
+                richMessage: TextSpan(
+                  style: const TextStyle(fontSize: 12, color: Colors.white70),
+                  children: [
+                    const TextSpan(text: 'Net Worth Breakdown:\n\n', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13)),
+                    TextSpan(text: '• Invested Corpus: ${formatCurrency(investedCorpus)}\n'),
+                    TextSpan(text: '• Emergency Fund: ${formatCurrency(emergencyFund)}\n'),
+                    TextSpan(text: '• Other Assets: ${formatCurrency(otherAssets)}\n'),
+                    TextSpan(text: '• Liabilities: -${formatCurrency(liabilities)}\n', style: TextStyle(color: colors.high, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                child: const Icon(Icons.info_outline, size: 16, color: Color(0xFFA0A0A0)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                formatCurrency(netWorth),
+                style: theme.textTheme.displaySmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Row(
+                children: [
+                  Icon(
+                    trendPercent >= 0 ? Icons.trending_up : Icons.trending_down,
+                    color: trendPercent >= 0 ? colors.success : colors.high,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${trendPercent >= 0 ? '+' : ''}${trendPercent.toStringAsFixed(1)}% (1-yr proj)',
+                    style: TextStyle(
+                      color: trendPercent >= 0 ? colors.success : colors.high,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FinancialHealthScoreCard extends StatelessWidget {
+  final int score;
+  final UserProfile profile;
+  final Assumptions assumptions;
+  final List<Goal> goals;
+  final List<RecurringPurchase> purchases;
+  final List<IncomeSource> incomeSources;
+  final List<YearProjection> projections;
+
+  const _FinancialHealthScoreCard({
+    required this.score,
+    required this.profile,
+    required this.assumptions,
+    required this.goals,
+    required this.purchases,
+    required this.incomeSources,
+    required this.projections,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.extension<LedgerColors>()!;
+
+    final Color statusColor;
+    if (score >= 70) {
+      statusColor = colors.success;
+    } else if (score >= 40) {
+      statusColor = colors.warning;
+    } else {
+      statusColor = colors.high;
+    }
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        _showBreakdownDialog(context);
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF2E2E2E)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('FINANCIAL HEALTH SCORE',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: const Color(0xFFA0A0A0),
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5,
+                      )),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your score is $score/100',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Tap to view recommendations & breakdown',
+                    style: theme.textTheme.bodySmall?.copyWith(color: statusColor),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            SizedBox(
+              width: 50,
+              height: 50,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    value: score / 100,
+                    strokeWidth: 5,
+                    backgroundColor: const Color(0xFF2E2E2E),
+                    valueColor: AlwaysStoppedAnimation(statusColor),
+                  ),
+                  Text(
+                    '$score',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showBreakdownDialog(BuildContext context) {
+    final colors = Theme.of(context).extension<LedgerColors>()!;
+
+    final year1 = projections.firstWhere((p) => p.year == 1, orElse: () => projections.first);
+    final takeHome = year1.totalIncome > 0 ? year1.totalIncome : year1.takeHomeMonthly;
+    final expenses = year1.expensesMonthly;
+
+    final sipPct = profile.sipRatePct * 100;
+    final sipPoints = sipPct >= 15 ? 25 : (sipPct >= 10 ? 15 : 5);
+
+    final efMonths = finance.emergencyFundMonths(profile);
+    final efPoints = efMonths >= 6 ? 20 : (efMonths >= 3 ? 12 : 5);
+
+    final expRatio = takeHome > 0 ? (expenses / takeHome) : 1.0;
+    final expPoints = expRatio < 0.40 ? 20 : (expRatio <= 0.60 ? 12 : 5);
+
+    int goalPoints = 20;
+    int onTrackCount = 0;
+    if (goals.isNotEmpty) {
+      for (final g in goals) {
+        final fundedYear = finance.yearsToGoal(g, profile, purchases, assumptions, incomeSources: incomeSources);
+        if (fundedYear > 0 && fundedYear <= g.targetYear) {
+          onTrackCount++;
+        }
+      }
+      final ratio = onTrackCount / goals.length;
+      goalPoints = ratio == 1.0 ? 20 : (ratio >= 0.5 ? 10 : 5);
+    }
+
+    int growthPoints = 5;
+    final ctcYear1 = year1.ctcLpa * 100000;
+    final corpusYear10 = projections.firstWhere((p) => p.year == 10, orElse: () => projections.last).corpus;
+    if (ctcYear1 > 0) {
+      final multiple = corpusYear10 / ctcYear1;
+      growthPoints = multiple >= 5.0 ? 15 : (multiple >= 2.0 ? 10 : 5);
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Financial Health Score'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildBreakdownRow('SIP Savings Rate', '$sipPoints/25', 'Target: 15%+', sipPoints >= 25 ? colors.success : colors.warning),
+              _buildBreakdownRow('Emergency Fund', '$efPoints/20', 'Target: 6+ months', efPoints >= 20 ? colors.success : colors.warning),
+              _buildBreakdownRow('Expense Ratio', '$expPoints/20', 'Target: <40% of income', expPoints >= 20 ? colors.success : colors.warning),
+              _buildBreakdownRow('Goal Feasibility', '$goalPoints/20', 'Target: All goals on-track', goalPoints >= 20 ? colors.success : colors.warning),
+              _buildBreakdownRow('10-Yr Corpus Growth', '$growthPoints/15', 'Target: >5x starting CTC', growthPoints >= 15 ? colors.success : colors.warning),
+              const Divider(height: 24),
+              const Text(
+                'Recommendations:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              const SizedBox(height: 6),
+              if (sipPoints < 25) const Text('• Increase your SIP rate to at least 15% to accelerate wealth growth.', style: TextStyle(fontSize: 12)),
+              if (efPoints < 20) const Text('• Build your Emergency Fund up to at least 6 months of expenses.', style: TextStyle(fontSize: 12)),
+              if (expPoints < 20) const Text('• Cut back on discretionary expenses to keep the expense ratio under 40%.', style: TextStyle(fontSize: 12)),
+              if (goalPoints < 20) const Text('• Some goals are delayed. Consider delaying targets or increasing monthly SIP.', style: TextStyle(fontSize: 12)),
+              if (growthPoints < 15) const Text('• Boost career hikes or add side incomes to exceed 5x CTC in 10 years.', style: TextStyle(fontSize: 12)),
+              if (sipPoints >= 25 && efPoints >= 20 && expPoints >= 20 && goalPoints >= 20 && growthPoints >= 15)
+                const Text('• You are in top financial shape! Keep tracking and compounding.', style: TextStyle(fontSize: 12)),
+            ],
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBreakdownRow(String title, String points, String target, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+              Text(target, style: const TextStyle(color: Colors.grey, fontSize: 10)),
+            ],
+          ),
+          Text(points, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13)),
+        ],
+      ),
+    );
+  }
+}
+
+class _CashFlowWaterfall extends StatelessWidget {
+  final double takeHome;
+  final double expenses;
+  final double sip;
+  final double purchases;
+  final double freeCash;
+
+  const _CashFlowWaterfall({
+    required this.takeHome,
+    required this.expenses,
+    required this.sip,
+    required this.purchases,
+    required this.freeCash,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.extension<LedgerColors>()!;
+
+    final items = [
+      _WaterfallItem('Take-Home', takeHome, Colors.blueGrey, isTotal: true),
+      _WaterfallItem('Expenses', expenses, colors.high),
+      _WaterfallItem('SIP', sip, theme.colorScheme.primary),
+      _WaterfallItem('Purchases', purchases, colors.warning),
+      _WaterfallItem('Free Cash', freeCash > 0 ? freeCash : 0.0, colors.success),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF2E2E2E)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: items.map((item) {
+          final pct = takeHome > 0 ? (item.amount / takeHome * 100) : 0.0;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      item.label,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: item.isTotal ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                    Text(
+                      '${formatCurrency(item.amount)} (${pct.toStringAsFixed(0)}%)',
+                      style: TextStyle(
+                        color: item.color,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0.0, end: (pct / 100).clamp(0.0, 1.0)),
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) {
+                      return LinearProgressIndicator(
+                        value: value,
+                        minHeight: 8,
+                        backgroundColor: const Color(0xFF2E2E2E),
+                        valueColor: AlwaysStoppedAnimation(item.color),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _WaterfallItem {
+  final String label;
+  final double amount;
+  final Color color;
+  final bool isTotal;
+
+  _WaterfallItem(this.label, this.amount, this.color, {this.isTotal = false});
 }

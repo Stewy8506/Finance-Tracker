@@ -6,10 +6,10 @@ const _kBoxName = 'purchases';
 
 class PurchasesNotifier extends StateNotifier<List<RecurringPurchase>> {
   PurchasesNotifier() : super([]) {
-    _load();
+    load();
   }
 
-  void _load() {
+  void load() {
     final box = Hive.box<RecurringPurchase>(_kBoxName);
     state = box.values.toList();
   }

@@ -10,6 +10,7 @@ import 'theme.dart';
 import 'router.dart';
 import 'finance.dart';
 import 'providers/user_profile_provider.dart';
+import 'utils/migration.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +31,9 @@ Future<void> main() async {
   await Hive.openBox<RecurringPurchase>('purchases');
   await Hive.openBox<Assumptions>('assumptions');
   await Hive.openBox<IncomeSource>('income_sources');
+
+  // Run database migrations
+  await runMigrations();
 
   // Verify finance engine assertions in debug mode
   assert(() {

@@ -1,10 +1,14 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../../finance.dart' as finance;
 import '../../../models/goal.dart';
+import '../../../models/assumptions.dart';
 import '../../../providers/user_profile_provider.dart';
 import '../../../providers/purchases_provider.dart';
 import '../../../providers/assumptions_provider.dart';
+import '../../../providers/projection_provider.dart';
 import '../../../theme.dart';
 import '../../../utils/currency_formatter.dart';
 
@@ -27,6 +31,7 @@ class GoalCard extends ConsumerWidget {
     final profile = ref.watch(userProfileProvider);
     final purchases = ref.watch(purchasesProvider);
     final assumptions = ref.watch(assumptionsProvider);
+    final projections = ref.watch(projectionProvider);
 
     final priorityColor = goal.priority == 'high'
         ? colors.high
@@ -138,6 +143,14 @@ class GoalCard extends ConsumerWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            _GoalSparkline(
+              goal: goal,
+              projections: projections,
+              assumptions: assumptions,
+              colors: colors,
+              primaryColor: theme.colorScheme.primary,
+            ),
             // Down payment extras
             if (goal.type == 'down_payment' && emi != null) ...[
               const Divider(height: 20),
@@ -230,6 +243,99 @@ class DetailRow extends StatelessWidget {
             style: theme.textTheme.bodyMedium
                 ?.copyWith(fontWeight: FontWeight.w600)),
       ],
+    );
+  }
+}
+
+class _GoalSparkline extends StatelessWidget {
+  final Goal goal;
+  final List<dynamic> projections;
+  final Assumptions assumptions;
+  final LedgerColors colors;
+  final Color primaryColor;
+
+  const _GoalSparkline({
+    required this.goal,
+    required this.projections,
+    required this.assumptions,
+    required this.colors,
+    required this.primaryColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (projections.isEmpty) return const SizedBox.shrink();
+
+    final spots = projections.map((p) {
+      return FlSpot(p.year.toDouble(), p.corpus / 100000);
+    }).toList();
+
+    final targetVal = goal.targetAmount / 100000;
+
+    int intersectionYear = 0;
+    for (final p in projections) {
+      final targetAtYear = goal.adjustForInflation == true
+          ? goal.targetAmount * math.pow(1 + assumptions.expenseInflation, p.year)
+          : goal.targetAmount;
+      if (p.corpus >= targetAtYear) {
+        intersectionYear = p.year;
+        break;
+      }
+    }
+
+    final maxY = [
+      ...projections.map((p) => p.corpus / 100000),
+      targetVal,
+    ].reduce((a, b) => a > b ? a : b) * 1.1;
+
+    return Container(
+      height: 60,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: LineChart(
+        LineChartData(
+          minX: 0,
+          maxX: 20,
+          minY: 0,
+          maxY: maxY,
+          gridData: const FlGridData(show: false),
+          borderData: FlBorderData(show: false),
+          titlesData: const FlTitlesData(
+            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          extraLinesData: ExtraLinesData(
+            horizontalLines: [
+              HorizontalLine(
+                y: targetVal,
+                color: colors.success.withValues(alpha: 0.5),
+                strokeWidth: 1,
+                dashArray: [4, 4],
+              ),
+            ],
+          ),
+          lineBarsData: [
+            LineChartBarData(
+              spots: spots,
+              isCurved: true,
+              curveSmoothness: 0.3,
+              color: primaryColor,
+              barWidth: 2,
+              dotData: FlDotData(
+                show: intersectionYear > 0,
+                checkToShowDot: (spot, _) => spot.x.toInt() == intersectionYear,
+                getDotPainter: (spot, _, _, _) => FlDotCirclePainter(
+                  radius: 3.5,
+                  color: colors.success,
+                  strokeWidth: 1.5,
+                  strokeColor: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

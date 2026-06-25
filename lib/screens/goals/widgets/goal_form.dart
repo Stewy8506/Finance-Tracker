@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../models/goal.dart';
@@ -78,6 +79,7 @@ class _GoalFormState extends ConsumerState<GoalForm> {
     } else {
       ref.read(goalsProvider.notifier).add(goal);
     }
+    HapticFeedback.mediumImpact();
     Navigator.pop(context);
   }
 

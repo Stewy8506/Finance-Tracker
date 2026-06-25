@@ -12,6 +12,8 @@ import '../../providers/assumptions_provider.dart';
 import '../../providers/income_provider.dart';
 import '../../theme.dart';
 import '../../utils/currency_formatter.dart';
+import '../../utils/data_import.dart';
+import 'package:flutter/services.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -118,6 +120,8 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
   late double _sipPct;
   late final TextEditingController _emergencyFundCtrl;
   late final TextEditingController _startYearCtrl;
+  late final TextEditingController _otherAssetsCtrl;
+  late final TextEditingController _liabilitiesCtrl;
   late List<HikeBracket> _hikeBrackets;
 
   @override
@@ -139,6 +143,10 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
         text: (p.emergencyFundBalance ?? 0).toInt().toString());
     _startYearCtrl = TextEditingController(
         text: (p.startYear ?? DateTime.now().year).toString());
+    _otherAssetsCtrl = TextEditingController(
+        text: (p.otherAssets ?? 0).toInt().toString());
+    _liabilitiesCtrl = TextEditingController(
+        text: (p.liabilities ?? 0).toInt().toString());
     _hikeBrackets = List.from(p.hikeBrackets);
     if (_hikeBrackets.isEmpty) {
       _hikeBrackets = UserProfile.defaultHikeBrackets(p.annualHikePct);
@@ -156,6 +164,8 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
     _miscCtrl.dispose();
     _emergencyFundCtrl.dispose();
     _startYearCtrl.dispose();
+    _otherAssetsCtrl.dispose();
+    _liabilitiesCtrl.dispose();
     super.dispose();
   }
 
@@ -174,6 +184,8 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
       sipRatePct: _sipPct / 100,
       emergencyFundBalance: double.tryParse(_emergencyFundCtrl.text) ?? 0,
       startYear: int.tryParse(_startYearCtrl.text) ?? DateTime.now().year,
+      otherAssets: double.tryParse(_otherAssetsCtrl.text) ?? 0,
+      liabilities: double.tryParse(_liabilitiesCtrl.text) ?? 0,
     );
     updated.hikeBrackets = _hikeBrackets;
     ref.read(userProfileProvider.notifier).save(updated);
@@ -296,6 +308,44 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _otherAssetsCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Other Assets',
+                      prefixText: '₹ ',
+                    ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Enter balance';
+                      final val = double.tryParse(v);
+                      if (val == null || val < 0) return 'Invalid balance';
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextFormField(
+                    controller: _liabilitiesCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Liabilities',
+                      prefixText: '₹ ',
+                    ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Enter liabilities';
+                      final val = double.tryParse(v);
+                      if (val == null || val < 0) return 'Invalid balance';
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
             Text('Stepped Salary Hike Brackets',
                 style: theme.textTheme.titleMedium),
@@ -325,6 +375,7 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
                           max: 50,
                           divisions: 50,
                           onChanged: (v) {
+                            HapticFeedback.lightImpact();
                             setState(() {
                               _hikeBrackets[index] = HikeBracket(
                                 fromYear: bracket.fromYear,
@@ -457,7 +508,10 @@ class _ProfileEditorState extends ConsumerState<_ProfileEditor> {
             min: 10,
             max: 30,
             divisions: 20,
-            onChanged: (v) => setState(() => _sipPct = v),
+            onChanged: (v) {
+              HapticFeedback.lightImpact();
+              setState(() => _sipPct = v);
+            },
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -811,6 +865,7 @@ class _DataSection extends ConsumerWidget {
     final goals = ref.watch(goalsProvider);
     final purchases = ref.watch(purchasesProvider);
     final assumptions = ref.watch(assumptionsProvider);
+    final incomeSources = ref.watch(incomeSourcesProvider);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -849,6 +904,11 @@ class _DataSection extends ConsumerWidget {
                   'monthlyTransport': profile?.monthlyTransport,
                   'monthlyMisc': profile?.monthlyMisc,
                   'sipRatePct': profile?.sipRatePct,
+                  'emergencyFundBalance': profile?.emergencyFundBalance,
+                  'startYear': profile?.startYear,
+                  'otherAssets': profile?.otherAssets,
+                  'liabilities': profile?.liabilities,
+                  'hikeBracketsRaw': profile?.hikeBracketsRaw,
                 },
                 'goals': goals.map((g) => {
                       'id': g.id,
@@ -857,6 +917,9 @@ class _DataSection extends ConsumerWidget {
                       'targetYear': g.targetYear,
                       'type': g.type,
                       'priority': g.priority,
+                      'adjustForInflation': g.adjustForInflation,
+                      'propertyValue': g.propertyValue,
+                      'downPaymentPct': g.downPaymentPct,
                     }).toList(),
                 'purchases': purchases.map((p) => {
                       'id': p.id,
@@ -865,6 +928,12 @@ class _DataSection extends ConsumerWidget {
                       'firstYear': p.firstYear,
                       'recurEveryNYears': p.recurEveryNYears,
                       'category': p.category,
+                    }).toList(),
+                'incomeSources': incomeSources.map((s) => {
+                      'id': s.id,
+                      'label': s.label,
+                      'monthlyAmount': s.monthlyAmount,
+                      'annualGrowthPct': s.annualGrowthPct,
                     }).toList(),
                 'assumptions': {
                   'sipReturnRate': assumptions.sipReturnRate,
@@ -876,6 +945,84 @@ class _DataSection extends ConsumerWidget {
               };
               final json = const JsonEncoder.withIndent('  ').convert(data);
               await Share.share(json, subject: 'Ledger Export');
+            },
+          ),
+          const Divider(height: 1),
+          // Import JSON
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF262626),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(Icons.upload_outlined,
+                  color: theme.colorScheme.primary, size: 20),
+            ),
+            title: const Text('Import from JSON'),
+            subtitle: const Text('Paste and restore your financial data'),
+            trailing: const Icon(Icons.chevron_right, size: 20),
+            onTap: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Import Data'),
+                  content: const Text(
+                      'This will overwrite all your current data. Are you sure you want to proceed?'),
+                  actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Cancel')),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Proceed'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm != true) return;
+
+              if (!context.mounted) return;
+              final txtCtrl = TextEditingController();
+              final importJson = await showDialog<String>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Paste Exported JSON'),
+                  content: SizedBox(
+                    width: double.maxFinite,
+                    child: TextField(
+                      controller: txtCtrl,
+                      maxLines: 12,
+                      decoration: const InputDecoration(
+                        hintText: '{\n  "profile": ...\n}',
+                        border: OutlineInputBorder(),
+                      ),
+                      style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Cancel')),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(ctx, txtCtrl.text),
+                      child: const Text('Import'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (importJson != null && importJson.trim().isNotEmpty) {
+                final result = await importFromJson(importJson, ref);
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(result.message),
+                    backgroundColor: result.success ? colors.success : colors.high,
+                  ),
+                );
+              }
             },
           ),
           const Divider(height: 1),

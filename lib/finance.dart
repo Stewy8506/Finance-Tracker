@@ -337,6 +337,114 @@ List<YearProjection> generateProjection(
   return projections;
 }
 
+/// Computes a unified financial health score from 0 to 100 based on weighted factors.
+int financialHealthScore(
+  UserProfile profile,
+  Assumptions assumptions,
+  List<Goal> goals,
+  List<RecurringPurchase> purchases,
+  List<IncomeSource> incomeSources,
+  List<YearProjection> projections,
+) {
+  if (projections.isEmpty) return 0;
+
+  final year1 = projections.firstWhere((p) => p.year == 1, orElse: () => projections.first);
+  final takeHome = year1.totalIncome > 0 ? year1.totalIncome : year1.takeHomeMonthly;
+  final expenses = year1.expensesMonthly;
+
+  // 1. SIP Rate (25pts)
+  int sipPoints = 5;
+  final sipPct = profile.sipRatePct * 100;
+  if (sipPct >= 15) {
+    sipPoints = 25;
+  } else if (sipPct >= 10) {
+    sipPoints = 15;
+  }
+
+  // 2. Emergency Fund (20pts)
+  int efPoints = 5;
+  final efMonths = emergencyFundMonths(profile);
+  if (efMonths >= 6) {
+    efPoints = 20;
+  } else if (efMonths >= 3) {
+    efPoints = 12;
+  }
+
+  // 3. Expense Ratio (20pts)
+  int expPoints = 5;
+  final expRatio = takeHome > 0 ? (expenses / takeHome) : 1.0;
+  if (expRatio < 0.40) {
+    expPoints = 20;
+  } else if (expRatio <= 0.60) {
+    expPoints = 12;
+  }
+
+  // 4. Goal Feasibility (20pts)
+  int goalPoints = 20;
+  if (goals.isNotEmpty) {
+    int onTrackCount = 0;
+    for (final g in goals) {
+      final fundedYear = yearsToGoal(g, profile, purchases, assumptions, incomeSources: incomeSources);
+      if (fundedYear > 0 && fundedYear <= g.targetYear) {
+        onTrackCount++;
+      }
+    }
+    final ratio = onTrackCount / goals.length;
+    if (ratio == 1.0) {
+      goalPoints = 20;
+    } else if (ratio >= 0.5) {
+      goalPoints = 10;
+    } else {
+      goalPoints = 5;
+    }
+  }
+
+  // 5. Savings Growth (15pts)
+  int growthPoints = 5;
+  final ctcYear1 = year1.ctcLpa * 100000;
+  final corpusYear10 = projections.firstWhere((p) => p.year == 10, orElse: () => projections.last).corpus;
+  if (ctcYear1 > 0) {
+    final multiple = corpusYear10 / ctcYear1;
+    if (multiple >= 5.0) {
+      growthPoints = 15;
+    } else if (multiple >= 2.0) {
+      growthPoints = 10;
+    }
+  }
+
+  return sipPoints + efPoints + expPoints + goalPoints + growthPoints;
+}
+
+/// Sustainable monthly SWP from a given corpus, growing with inflation.
+double swpMonthly(double corpus, double annualReturn, double inflation, int years) {
+  if (corpus <= 0 || years <= 0) return 0;
+  final monthlyReturn = annualReturn / 12;
+  final monthlyInflation = inflation / 12;
+  final n = years * 12;
+  
+  final rReal = (monthlyReturn - monthlyInflation) / (1 + monthlyInflation);
+  if (rReal == 0) return corpus / n;
+  
+  return corpus * rReal / (1 - math.pow(1 + rReal, -n));
+}
+
+/// Compares how many years a corpus will last given a starting monthly withdrawal.
+int corpusDepletionYear(double corpus, double monthlyWithdrawal, double returnRate, double inflationRate) {
+  double remaining = corpus;
+  double withdrawal = monthlyWithdrawal;
+  
+  for (int y = 1; y <= 50; y++) {
+    if (y > 1) {
+      withdrawal *= (1 + inflationRate);
+    }
+    for (int m = 1; m <= 12; m++) {
+      remaining = remaining * (1 + returnRate / 12) - withdrawal;
+      if (remaining <= 0) return y;
+    }
+  }
+  return 99;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // VERIFICATION ASSERTIONS (run in debug mode only)
 // ─────────────────────────────────────────────────────────────────────────────

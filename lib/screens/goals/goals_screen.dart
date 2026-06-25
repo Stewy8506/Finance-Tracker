@@ -53,27 +53,17 @@ class GoalsScreen extends ConsumerWidget {
 
   Future<void> _deleteGoal(
       BuildContext context, WidgetRef ref, Goal goal) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Goal'),
-        content: Text('Delete "${goal.name}"? This cannot be undone.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error),
-            child: const Text('Delete'),
-          ),
-        ],
+    ref.read(goalsProvider.notifier).delete(goal.id);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Goal "${goal.name}" deleted'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () =>
+              ref.read(goalsProvider.notifier).add(goal),
+        ),
       ),
     );
-    if (confirm == true) {
-      ref.read(goalsProvider.notifier).delete(goal.id);
-    }
   }
 
   void _showGoalSheet(BuildContext context, WidgetRef ref, Goal? existing) {
